@@ -3,6 +3,7 @@ import styled from "styled-components";
 import MakePayment from "./MakePayment";
 import ViewApplications from './ViewApplications';
 import CreateScholar from './CreateScholar';
+import ViewTransactions from './ViewTransactions';
 import { useNavigate } from 'react-router-dom';
 
 const drawerWidth = 220;
@@ -104,6 +105,8 @@ const Title = styled.h1`
           return <CreateScholar />;
         case 'payment':
           return <MakePayment onBack={() => setActive('view')} />;
+        case 'transactions':
+          return <ViewTransactions />;
         default:
           return <ViewApplications />;
       }
@@ -127,6 +130,7 @@ const Title = styled.h1`
             <NavButton active={active === 'view'} onClick={() => setActive('view')}>View Applications</NavButton>
             <NavButton active={active === 'create'} onClick={() => setActive('create')}>Create Scholar</NavButton>
             <NavButton active={active === 'payment'} onClick={() => setActive('payment')}>Make Payment</NavButton>
+            <NavButton active={active === 'transactions'} onClick={() => setActive('transactions')}>View Transactions</NavButton>
           </Nav>
 
           <div style={{marginTop:24}}>

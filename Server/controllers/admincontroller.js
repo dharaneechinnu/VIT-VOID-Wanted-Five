@@ -8,6 +8,7 @@ const { default: mongoose } = require('mongoose');
 const VerifierApplication = require('../models/verifierapplyform');
 const Transaction = require('../models/transaction');
 const { createPayout, createOrder, capturePayment, createContact, createFundAccount } = require('../services/razorpayService');
+const { createBlock, generateSecureTransactionId } = require('../services/blockchainService');
 const nodemailer = require('nodemailer');
 const PDFDocument = require('pdfkit');
 const stream = require('stream');
@@ -341,7 +342,9 @@ exports.makePayoutToVerifier = async (req, res) => {
       console.error('Payout aborted - invalid beneficiaryId:', bid);
       // Log a failed transaction record for visibility
       try {
-        await Transaction.create({
+        // resolve admin id from application or scholarship
+        const adminIdForTxn = application.adminId || (scholarship && scholarship.createdBy) || undefined;
+        const txnPayloadFailed = {
           applicationId: application._id,
           beneficiaryId: bid,
           amount,
@@ -350,7 +353,9 @@ exports.makePayoutToVerifier = async (req, res) => {
           failureReason: msg,
           payoutDetails: payout,
           rawResponse: { note: 'invalid beneficiaryId' },
-        });
+        };
+        if (adminIdForTxn) txnPayloadFailed.adminid = adminIdForTxn;
+        await Transaction.create(txnPayloadFailed);
       } catch (logErr) {
         console.error('Failed to log failed transaction (invalid beneficiary):', logErr);
       }
@@ -380,7 +385,8 @@ exports.makePayoutToVerifier = async (req, res) => {
 
       // Log failed transaction with a readable failureReason
       try {
-        await Transaction.create({
+        const adminIdForTxn = application.adminId || (scholarship && scholarship.createdBy) || undefined;
+        const txnPayloadFailed = {
           applicationId: application._id,
           beneficiaryId: payout.beneficiaryId,
           amount,
@@ -389,7 +395,9 @@ exports.makePayoutToVerifier = async (req, res) => {
           failureReason: errMsg,
           payoutDetails: payout,
           rawResponse: errDetails,
-        });
+        };
+        if (adminIdForTxn) txnPayloadFailed.adminid = adminIdForTxn;
+        await Transaction.create(txnPayloadFailed);
       } catch (logErr) {
         console.error('Failed to log failed transaction:', logErr);
       }
@@ -409,9 +417,16 @@ exports.makePayoutToVerifier = async (req, res) => {
       payoutDetails: payout,
       rawResponse: payoutResp,
     };
+    // attach admin id if resolvable
+    const adminIdForTxnMain = application.adminId || (scholarship && scholarship.createdBy) || undefined;
+    if (adminIdForTxnMain) txnPayload.adminid = adminIdForTxnMain;
 
     let txn;
     try {
+      if (!txnPayload.adminid) {
+        // admin id is mandatory for transactions
+        return res.status(500).json({ message: 'Admin id not found for this application; cannot create transaction record' });
+      }
       txn = await Transaction.create(txnPayload);
     } catch (txErr) {
       console.error('Failed to create transaction record:', txErr);
@@ -497,7 +512,8 @@ exports.createOrderForApplication = async (req, res) => {
     const order = await createOrder({ amount, currency: 'INR', receipt: `app_${application._id}`, notes: { applicationId: application._id.toString() } });
 
     // Record a transaction tied to this application and order (include beneficiaryId)
-    const txn = await Transaction.create({
+    const adminIdForOrder = application.adminId || (scholarship && scholarship.createdBy) || undefined;
+    const txnPayloadOrder = {
       applicationId: application._id,
       beneficiaryId: payout.beneficiaryId,
       amount,
@@ -505,7 +521,12 @@ exports.createOrderForApplication = async (req, res) => {
       status: 'order_created',
       orderId: order.id,
       rawResponse: order,
-    });
+    };
+    if (adminIdForOrder) txnPayloadOrder.adminid = adminIdForOrder;
+    if (!txnPayloadOrder.adminid) {
+      return res.status(500).json({ message: 'Admin id not found for this application; cannot create order transaction' });
+    }
+    const txn = await Transaction.create(txnPayloadOrder);
 
     // Return order and transaction along with publishable key for frontend
     const key = process.env.RAZORPAY_TEST_KEY_ID || process.env.RAZORPAY_KEY_ID || 'rzp_test_your_key_here';
@@ -559,10 +580,14 @@ exports.verifyPaymentForApplication = async (req, res) => {
     }
 
     // Update transaction record
-    const txn = await Transaction.findOne({ applicationId, orderId: razorpay_order_id });
+  const txn = await Transaction.findOne({ applicationId, orderId: razorpay_order_id });
     if (!txn) {
-      // create a transaction if missing (include beneficiaryId and amount if available)
-      const newTxn = await Transaction.create({
+      // Generate secure transaction ID using blockchain service
+      const secureTransactionId = generateSecureTransactionId(applicationId, razorpay_payment_id);
+      
+      // Create a transaction if missing (include beneficiaryId and amount if available)
+      const adminIdForPaidTxn = application.adminId || (scholarship && scholarship.createdBy) || undefined;
+      const newTxnPayload = {
         applicationId,
         beneficiaryId: payout.beneficiaryId,
         amount: amount || 0,
@@ -570,9 +595,57 @@ exports.verifyPaymentForApplication = async (req, res) => {
         status: 'paid',
         paymentId: razorpay_payment_id,
         orderId: razorpay_order_id,
+        paidAt: new Date(),
+        hashedTransactionId: secureTransactionId,
         rawResponse: req.body,
-      });
+      };
+      if (adminIdForPaidTxn) newTxnPayload.adminid = adminIdForPaidTxn;
+      if (!newTxnPayload.adminid) {
+        return res.status(500).json({ message: 'Admin id not found for this application; cannot create transaction record' });
+      }
+      const newTxn = await Transaction.create(newTxnPayload);
+
+      // Create blockchain block for this transaction
+      try {
+        const blockData = {
+          applicationId: applicationId,
+          transactionId: newTxn._id.toString(),
+          userId: application.studentid || 'anonymous',
+          amount: amount || 0,
+          currency: 'INR',
+          status: 'paid',
+          razorpayPaymentId: razorpay_payment_id,
+          razorpayOrderId: razorpay_order_id,
+        };
+
+        const block = await createBlock(blockData);
+        
+        // Update transaction with block reference
+        newTxn.blockId = block._id;
+        await newTxn.save();
+        
+        console.log(`Blockchain block created for transaction ${newTxn._id}: ${block.hash}`);
+      } catch (blockError) {
+        console.error('Error creating blockchain block:', blockError);
+        // Continue execution even if blockchain fails
+      }
+
       return res.status(200).json({ message: 'Payment verified', transaction: newTxn });
+    }
+
+    // Generate secure transaction ID if not present
+    if (!txn.hashedTransactionId) {
+      txn.hashedTransactionId = generateSecureTransactionId(applicationId, razorpay_payment_id);
+    }
+
+    // Ensure adminid exists on existing transaction (populate from application or scholarship)
+    try {
+      if (!txn.adminid) {
+        const possibleAdmin = application.adminId || (scholarship && scholarship.createdBy) || undefined;
+        if (possibleAdmin) txn.adminid = possibleAdmin;
+      }
+    } catch (e) {
+      // non-fatal
     }
 
     txn.status = 'paid';
@@ -580,6 +653,31 @@ exports.verifyPaymentForApplication = async (req, res) => {
     txn.paidAt = new Date();
     txn.rawResponse = txn.rawResponse || {};
     txn.rawResponse.paymentVerification = req.body;
+    
+    // Create blockchain block for existing transaction if not already created
+    if (!txn.blockId) {
+      try {
+        const blockData = {
+          applicationId: applicationId,
+          transactionId: txn._id.toString(),
+          userId: application.studentid || 'anonymous',
+          amount: amount || txn.amount || 0,
+          currency: 'INR',
+          status: 'paid',
+          razorpayPaymentId: razorpay_payment_id,
+          razorpayOrderId: razorpay_order_id,
+        };
+
+        const block = await createBlock(blockData);
+        txn.blockId = block._id;
+        
+        console.log(`Blockchain block created for existing transaction ${txn._id}: ${block.hash}`);
+      } catch (blockError) {
+        console.error('Error creating blockchain block for existing transaction:', blockError);
+        // Continue execution even if blockchain fails
+      }
+    }
+    
     await txn.save();
     // Mark application as funded (donor decision) and record action time
     try {
@@ -917,6 +1015,94 @@ exports.getApplicationsForScholarship = async (req, res) => {
     return res.status(200).json({ total: applications.length, applications });
   } catch (error) {
     console.error('Error in getApplicationsForScholarship:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Admin: search transactions by multiple fields (applicationId, adminId, transferId, paymentId, orderId, status, beneficiaryId, q)
+exports.searchTransactions = async (req, res) => {
+  try {
+    const { applicationId, adminId, transferId, paymentId, orderId, status, beneficiaryId, q, page = 1, limit = 25 } = req.query;
+    const filter = {};
+    const mongoose = require('mongoose');
+
+    if (applicationId && mongoose.Types.ObjectId.isValid(applicationId)) filter.applicationId = applicationId;
+    if (adminId && mongoose.Types.ObjectId.isValid(adminId)) filter.adminid = adminId;
+    if (transferId) filter.transferId = transferId;
+    if (paymentId) filter.paymentId = paymentId;
+    if (orderId) filter.orderId = orderId;
+    if (status) filter.status = status;
+    if (beneficiaryId) filter.beneficiaryId = beneficiaryId;
+
+    // Free text query: try matching transferId/paymentId/orderId/hashedTransactionId
+    if (q && typeof q === 'string' && q.trim().length > 0) {
+      const regex = new RegExp(q.trim(), 'i');
+      filter.$or = [
+        { transferId: regex },
+        { paymentId: regex },
+        { orderId: regex },
+        { hashedTransactionId: regex },
+      ];
+    }
+
+    const p = Math.max(parseInt(page, 10) || 1, 1);
+    const l = Math.max(parseInt(limit, 10) || 25, 1);
+    const skip = (p - 1) * l;
+
+    const [total, transactions] = await Promise.all([
+      Transaction.countDocuments(filter),
+      Transaction.find(filter)
+        .populate('applicationId', 'ApplicationNo studentname studentemail')
+        .populate('adminid', 'orgName contactEmail name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(l),
+    ]);
+
+    return res.status(200).json({ total, page: p, limit: l, transactions });
+  } catch (error) {
+    console.error('Error in searchTransactions:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Get all transactions for a given adminId (path param) with optional q/page/limit
+exports.getTransactionsByAdminId = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const { q, page = 1, limit = 50 } = req.query;
+    const mongoose = require('mongoose');
+    if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: 'Valid adminId is required' });
+
+    const filter = { adminid: adminId };
+    if (q && typeof q === 'string' && q.trim().length > 0) {
+      const regex = new RegExp(q.trim(), 'i');
+      filter.$or = [
+        { transferId: regex },
+        { paymentId: regex },
+        { orderId: regex },
+        { hashedTransactionId: regex },
+        { beneficiaryId: regex },
+      ];
+    }
+
+    const p = Math.max(parseInt(page, 10) || 1, 1);
+    const l = Math.max(parseInt(limit, 10) || 25, 1);
+    const skip = (p - 1) * l;
+
+    const [total, transactions] = await Promise.all([
+      Transaction.countDocuments(filter),
+      Transaction.find(filter)
+        .populate('applicationId', 'ApplicationNo studentname studentemail')
+        .populate('adminid', 'orgName contactEmail name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(l),
+    ]);
+
+    return res.status(200).json({ total, page: p, limit: l, transactions });
+  } catch (error) {
+    console.error('Error in getTransactionsByAdminId:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

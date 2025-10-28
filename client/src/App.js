@@ -13,6 +13,8 @@ import VerifierApply from "./Verifier/VerifierApply";
 // 🎓 Student Components
 import StudentLogin from "./student/StudentLogin";
 import StudentRegister from "./student/StudentRegister";
+import StudentDashboard from "./student/StudentDashboard";
+import ViewScholarships from "./student/ViewScholarships";
 
 // 🧑‍💼 Admin Components
 import AdminLogin from './admin/AdminLogin';
@@ -43,6 +45,12 @@ function App() {
         
         {/* 🎓 Student Login */}
         <Route path="/Student/Login" element={<StudentLogin />} />
+
+  {/* 🏠 Student Dashboard */}
+  <Route path="/Student/Dashboard" element={<StudentDashboard />} />
+
+  {/* 📚 Student - View Scholarships */}
+  <Route path="/Student/ViewScholarships" element={<ViewScholarships />} />
 
         {/* 📝 Student Register */}
         <Route path="/Student/Register" element={<StudentRegister />} />

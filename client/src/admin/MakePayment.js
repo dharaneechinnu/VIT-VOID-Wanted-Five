@@ -203,7 +203,7 @@ const MakePayment = () => {
               <Label>Scholarship:</Label> <Value>{app.scholarshipId?.scholarshipName}</Value>
             </Row>
             <Row>
-              <Label>Amount:</Label> <Value>₹{app.scholarshipId?.scholarshipAmount}</Value>
+              <Label>FundedAmount:</Label> <Value>₹{app.fundedraised}</Value>
             </Row>
             <Row>
               <Label>Created:</Label>{" "}
