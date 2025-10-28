@@ -21,5 +21,9 @@ router.put(
   superAdminController.reviewVerifierRequest
 );
 
+// List pending donors and verifiers
+router.get('/pending-donors', superAdminController.listPendingDonors);
+router.get('/pending-verifiers', superAdminController.listPendingVerifiers);
+
 
 module.exports = router;

@@ -82,7 +82,7 @@ exports.reviewDonorRequest = async (req, res) => {
 
       return res.status(200).json({ message: "Donor approved, credentials saved & emailed", donor });
     } else {
-      await donor.save();
+     
       return res.status(200).json({ message: "Donor request rejected", donor });
     }
   } catch (error) {
@@ -124,11 +124,51 @@ exports.reviewVerifierRequest = async (req, res) => {
 
       return res.status(200).json({ message: "Verifier approved, credentials saved & emailed", verifier });
     } else {
-      await verifier.save();
+    
       return res.status(200).json({ message: "Verifier request rejected", verifier });
     }
   } catch (error) {
     console.error("Error reviewing verifier:", error);
     res.status(500).json({ message: "Error reviewing verifier request", error: error.message });
+  }
+};
+
+// List pending donor requests (paginated)
+exports.listPendingDonors = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit, 10) || 25, 1);
+    const skip = (page - 1) * limit;
+
+    const filter = { status: 'pending' };
+    const [total, donors] = await Promise.all([
+      Donor.countDocuments(filter),
+      Donor.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    ]);
+
+    return res.status(200).json({ total, page, limit, donors });
+  } catch (error) {
+    console.error('Error in listPendingDonors:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// List pending verifier requests (paginated)
+exports.listPendingVerifiers = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit, 10) || 25, 1);
+    const skip = (page - 1) * limit;
+
+    const filter = { status: 'pending' };
+    const [total, verifiers] = await Promise.all([
+      Verifier.countDocuments(filter),
+      Verifier.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    ]);
+
+    return res.status(200).json({ total, page, limit, verifiers });
+  } catch (error) {
+    console.error('Error in listPendingVerifiers:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

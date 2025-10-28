@@ -7,6 +7,7 @@ const transactionSchema = new mongoose.Schema({
     ref: 'VerifierApplication',
     required: true,
   },
+  adminid:{ type: mongoose.Schema.Types.ObjectId, ref: 'Donor', required: false },
   beneficiaryId: { type: String, required: true },
   amount: { type: Number, required: true }, // in paise
   currency: { type: String, default: 'INR' },

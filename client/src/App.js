@@ -18,6 +18,8 @@ import StudentRegister from "./student/StudentRegister";
 import AdminLogin from './admin/AdminLogin';
 import AdminRegister from './admin/AdminRegister'; // ✅ Added Admin Register
 import AdminDashboard from './admin/AdminDashboard';
+// Superadmin
+import SuperAdminDashboard from './superadmin/SuperAdminDashboard';
 
 function App() {
   return (
@@ -52,6 +54,8 @@ function App() {
   <Route path="/Admin/Register" element={<AdminRegister />} />
   {/* 🏠 Admin Dashboard */}
   <Route path="/Admin/Dashboard" element={<AdminDashboard />} />
+  {/* 🛡 Super Admin Dashboard */}
+  <Route path="/SuperAdmin/Dashboard" element={<SuperAdminDashboard />} />
       </Routes>
     </Router>
   );
