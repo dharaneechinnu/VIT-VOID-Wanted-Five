@@ -101,15 +101,15 @@ exports.loginVerifier = async (req, res) => {
 exports.viewAllScholarships = async (req, res) => {
   try {
     // Optional query param: onlyActive=true to filter active scholarships
-    const { onlyActive } = req.body;
+    const  onlyActive  = true;
     const filter = {};
     if (onlyActive === 'true') filter.isActive = true;
 
     const scholarships = await Scholarship.find(filter)
       .populate({ path: 'createdBy', select: 'orgName contactPerson contactEmail' })
-      .populate({ path: 'applicants.studentId', select: 'name email' })
-      .sort({ createdAt: -1 });
 
+      .sort({ createdAt: -1 });
+ console.log('Scholarships fetched:', scholarships);
     res.status(200).json({ count: scholarships.length, scholarships });
   } catch (error) {
     console.error('Error in viewAllScholarships:', error);
@@ -123,15 +123,16 @@ exports.applyForScholarship = async (req, res) => {
     const data = req.body;
 
     // Basic required fields validation
-    const required = ['verifierId', 'scholarshipId', 'studentname', 'studentemail', 'studentid', 'gender', 'institutionname', 'classoryear', 'familyIncome'];
+    const required = ['verifierId', 'scholarshipId', 'studentname', 'studentemail',  'gender', 'institutionname', 'classoryear', 'familyIncome', 'fundedraised', 'donorid'];
     for (const f of required) {
       if (!data[f]) return res.status(400).json({ message: `${f} is required` });
     }
 
-    // Validate object ids
+  // Validate object ids
     if (!mongoose.Types.ObjectId.isValid(data.verifierId)) return res.status(400).json({ message: 'Invalid verifierId' });
     if (!mongoose.Types.ObjectId.isValid(data.scholarshipId)) return res.status(400).json({ message: 'Invalid scholarshipId' });
-    if (!mongoose.Types.ObjectId.isValid(data.studentid)) return res.status(400).json({ message: 'Invalid studentid' });
+   
+  if (!mongoose.Types.ObjectId.isValid(data.donorid)) return res.status(400).json({ message: 'Invalid donorid' });
 
     // Ensure scholarship exists
     const scholarship = await Scholarship.findById(data.scholarshipId);
@@ -195,9 +196,12 @@ exports.applyForScholarship = async (req, res) => {
     const applicationPayload = {
       verifierId: data.verifierId,
       scholarshipId: data.scholarshipId,
+      // adminId will be resolved server-side from scholarship.createdBy
+      adminId: scholarship.createdBy || undefined,
+      donorid: data.donorid,
       studentname: data.studentname,
       studentemail: data.studentemail,
-      studentid: data.studentid,
+    
       gender: data.gender,
       institutionname: data.institutionname,
       classoryear: data.classoryear,
@@ -205,6 +209,7 @@ exports.applyForScholarship = async (req, res) => {
       twelfthMarks: data.twelfthMarks,
       semesterCgpa: Array.isArray(data.semesterCgpa) ? data.semesterCgpa : undefined,
       familyIncome: data.familyIncome,
+      fundedraised:data.fundedraised,
       firstGenGraduate: data.firstGenGraduate || false,
       documents: Array.isArray(data.documents) ? data.documents : [], // Accept documents metadata if provided
       remarks: data.remarks,
@@ -218,7 +223,7 @@ exports.applyForScholarship = async (req, res) => {
       beneficiaryId: data.payoutDetails.beneficiaryId,
       accountHolderName: data.payoutDetails.accountHolderName,
       accountNumber: data.payoutDetails.accountNumber,
-      maskedAccountNumber: data.payoutDetails.maskedAccountNumber,
+      maskedAccountNumber: "sjkdnfkjsdn",
       ifsc: data.payoutDetails.ifsc,
       bankName: data.payoutDetails.bankName,
       email: data.payoutDetails.email,
@@ -240,6 +245,35 @@ exports.applyForScholarship = async (req, res) => {
   }
 };
 
+exports.viewapplicationbyid = async (req, res) => {
+  try {
+    // ✅ Use query instead of body for GET requests
+    const { applicationId } = req.query;
+
+    if (!applicationId) {
+      return res.status(400).json({ message: 'applicationId is required' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(applicationId)) {
+      return res.status(400).json({ message: 'Invalid applicationId format' });
+    }
+
+    // ✅ Populate relevant references (ensure correct field names)
+    const application = await VerifierApplication.findById(applicationId)
+      .populate('scholarshipId', 'scholarshipName providerName scholarshipAmount applicationDeadline')
+      .populate('studentid', 'name email')
+      .populate('verifierId', 'institutionname contactEmail');
+
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+console.log('Application fetched:', application);
+    res.status(200).json({ application });
+  } catch (error) {
+    console.error('Error in viewapplicationbyid:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
 // Verifier: upload documents for an existing application (form-data with files)
 exports.uploadDocuments = async (req, res) => {
   try {

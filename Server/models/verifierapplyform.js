@@ -8,6 +8,17 @@ const verifierApplicationSchema = new mongoose.Schema(
       ref: "verifier",
       required: true,
     },
+     donorid: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Donor",
+      required: true,
+    },
+    // adminId: reference to the donor/admin who created the scholarship
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Donor',
+      required: false,
+    },
     scholarshipId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Scholarship",
@@ -18,7 +29,7 @@ const verifierApplicationSchema = new mongoose.Schema(
     studentid: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "UsersLogins",
-      required: true,
+    
     },
     gender: { type: String, enum: ["male", "female", "other"], required: true },
     institutionname: { type: String, required: true, trim: true },
@@ -92,11 +103,14 @@ const verifierApplicationSchema = new mongoose.Schema(
       default: "submitted",
     },
     remarks: { type: String, trim: true },
-    reviewedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Donor",
-      default: null,
+    fundedraised:{
+        type: Number,
+        required: true,
+        default:0
     },
+    // Donor review fields
+    
+   
     donorRemarks: { type: String, trim: true },
     donorDecision: {
       type: String,

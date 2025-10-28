@@ -1,10 +1,18 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import './App.css';
+import "./App.css";
 
 // 🌐 Verifier Components
-import VerifierLanding from './Verifier/VerifierLanding';
-import VerifierRegister from './Verifier/VerifierRegister';
-import VerifierLogin from './Verifier/VerifierLogin';
+import VerifierLanding from "./Verifier/VerifierLanding";
+import VerifierRegister from "./Verifier/VerifierRegister";
+import VerifierLogin from "./Verifier/VerifierLogin";
+import VerifierDashboard from "./Verifier/VerifierDashboard";
+import VerifierViewScholarships from "./Verifier/VerifierViewScholarships";
+import VerifierApply from "./Verifier/VerifierApply";
+
+
+// 🎓 Student Components
+import StudentLogin from "./student/StudentLogin";
+import StudentRegister from "./student/StudentRegister";
 
 // 🧑‍💼 Admin Components
 import AdminLogin from './admin/AdminLogin';
@@ -23,6 +31,19 @@ function App() {
 
         {/* 📝 Verifier Register */}
         <Route path="/Verifier/Register" element={<VerifierRegister />} />
+
+  {/* 📝 Verifier Dashboard */}
+  <Route path="/Verifier/Dashboard" element={<VerifierDashboard />} />
+    {/* 📚 Verifier - View Scholarships */}
+    <Route path="/Verifier/ViewScholarships" element={<VerifierViewScholarships />} />
+    {/* 📝 Verifier - Apply for a scholarship (prefill via state or query) */}
+    <Route path="/Verifier/Apply" element={<VerifierApply />} />
+        
+        {/* 🎓 Student Login */}
+        <Route path="/Student/Login" element={<StudentLogin />} />
+
+        {/* 📝 Student Register */}
+        <Route path="/Student/Register" element={<StudentRegister />} />
 
         {/* 🧑‍💼 Admin Login */}
         <Route path="/Admin/Login" element={<AdminLogin />} />

@@ -1,165 +1,137 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
 
-const PaymentWrapper = styled.div`
+const Wrapper = styled.div`
   min-height: 100vh;
-  background: #181818;
-  font-family: 'Poppins', sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 40px 20px;
+  background: #0a1120;
+  color: #e6eef8;
+  padding: 30px;
 `;
 
-const PaymentContainer = styled.div`
-  width: 100%;
-  max-width: 500px;
-  background: #222;
-  border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-`;
-
-const Title = styled.h1`
-  color: #ffae00;
-  font-size: 2.2rem;
-  margin-bottom: 30px;
+const Title = styled.h2`
   text-align: center;
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: #ffae00;
 `;
 
-const FormGroup = styled.div`
-  margin-bottom: 20px;
+const List = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
 `;
 
-const Label = styled.label`
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  display: block;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #444;
-  border-radius: 8px;
-  background: #333;
-  color: #fff;
-  font-size: 16px;
-  transition: border-color 0.3s;
-
-  &:focus {
-    outline: none;
-    border-color: #ffae00;
+const Card = styled.div`
+  background: #101a2b;
+  border-radius: 12px;
+  padding: 20px;
+  width: 340px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s;
+  &:hover {
+    transform: translateY(-4px);
+    background: #15223a;
   }
 `;
 
-const PaymentButton = styled.button`
-  width: 100%;
-  padding: 16px;
+const Row = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+`;
+
+const Label = styled.span`
+  color: #9fb0c8;
+  font-size: 13px;
+`;
+
+const Value = styled.span`
+  color: #e6eef8;
+  font-weight: 500;
+`;
+
+const Button = styled.button`
   background: linear-gradient(90deg, #ffae00, #ff6600);
   color: #fff;
   border: none;
-  border-radius: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  cursor: ${props => (props.disabled ? "not-allowed" : "pointer")};
-  opacity: ${props => (props.disabled ? 0.7 : 1)};
-  transition: all 0.3s;
-  margin-top: 20px;
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(90deg, #ffc233, #ff8533);
-    box-shadow: 0 5px 15px rgba(255,174,0,0.3);
-  }
-`;
-
-const BackButton = styled.button`
-  background: transparent;
-  border: 2px solid #ffae00;
-  color: #ffae00;
-  padding: 12px 24px;
+  padding: 10px 18px;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  margin-bottom: 30px;
-  transition: all 0.3s;
-
+  width: 100%;
+  margin-top: 15px;
+  transition: 0.3s;
   &:hover {
-    background: #ffae00;
-    color: #000;
+    background: linear-gradient(90deg, #ffc233, #ff8533);
   }
 `;
 
 const Message = styled.div`
-  color: ${props =>
-    props.type === "success" ? "#00e676" :
-    props.type === "error" ? "#ff1744" : "#ffe066"};
-  background: ${props =>
-    props.type === "success" ? "rgba(0,230,118,0.1)" :
-    props.type === "error" ? "rgba(255,23,68,0.1)" : "rgba(255,224,102,0.1)"};
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-top: 16px;
-  font-weight: 500;
+  color: ${props => props.type === "error" ? "#ff1744" : "#00e676"};
+  background: ${props => props.type === "error" ? "rgba(255,23,68,0.1)" : "rgba(0,230,118,0.1)"};
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 20px;
   text-align: center;
 `;
 
-const MakePayment = ({ onBack }) => {
-  const [formData, setFormData] = useState({
-    applicationId: "",
-    amount: ""
-  });
-  const [message, setMessage] = useState("");
+const MakePayment = () => {
+  const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  const storedAdmin = JSON.parse(localStorage.getItem("adminAuth"));
+  const adminId = storedAdmin?.admin?._id;
+
+  // ✅ Fetch all approved applications
+  const fetchApprovedApplications = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`http://localhost:3500/admin/getAllApplications/${adminId}`);
+      const allApps = res.data.applications || [];
+      const approvedApps = allApps.filter(app => String(app.donorDecision).toLowerCase() === "approved");
+      setApplications(approvedApps);
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Failed to load applications");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handlePayment = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    fetchApprovedApplications();
+  }, []);
 
-    if (!formData.applicationId) {
-      setMessage("❌ Please enter an application ID");
-      return;
-    }
-
-    setLoading(true);
+  // ✅ Handle payment for each application
+  const handlePayment = async (applicationId) => {
     setMessage("");
-
     try {
-      // 1) Create an order for this application on the backend
       const orderRes = await axios.post(
-        `http://localhost:3500/admin/applications/${formData.applicationId}/create-order`
+        `http://localhost:3500/admin/applications/${applicationId}/create-order`
       );
 
       if (!orderRes || orderRes.status !== 201) {
-        setMessage('❌ Failed to create order on server');
-        setLoading(false);
+        setMessage("❌ Failed to create payment order");
         return;
       }
 
-  const { order, key } = orderRes.data;
+      const { order, key } = orderRes.data;
 
       const options = {
-        key: key || process.env.REACT_APP_RAZORPAY_KEY_ID || 'rzp_test_your_key_here',
+        key: key || process.env.REACT_APP_RAZORPAY_KEY_ID || "rzp_test_your_key_here",
         amount: order.amount,
-        currency: order.currency || 'INR',
-        name: 'Scholarship Payment',
-        description: `Payment for Application ${formData.applicationId}`,
+        currency: order.currency || "INR",
+        name: "Scholarship Payment",
+        description: `Payment for Application ${applicationId}`,
         order_id: order.id,
         handler: async function (response) {
           try {
-            // 2) Verify the payment on the backend
+            // Verify payment
             const verifyRes = await axios.post(
-              `http://localhost:3500/admin/applications/${formData.applicationId}/verify-payment`,
+              `http://localhost:3500/admin/applications/${applicationId}/verify-payment`,
               {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
@@ -167,100 +139,84 @@ const MakePayment = ({ onBack }) => {
               }
             );
 
-            if (!verifyRes || verifyRes.status !== 200) {
-              setMessage('⚠️ Payment verification failed on server');
+            if (verifyRes.status !== 200) {
+              setMessage("⚠️ Payment verification failed");
               return;
             }
 
-            setMessage(`✅ Payment verified. Transaction: ${verifyRes.data.transaction?._id || verifyRes.data.transaction?.orderId || ''}`);
+            setMessage("✅ Payment verified successfully! Processing payout...");
 
-            // 3) Trigger payout to verifier (existing backend endpoint)
-            try {
-              const payoutRes = await axios.patch(
-                `http://localhost:3500/admin/applications/${formData.applicationId}/makepayout`
-              );
+            // Trigger payout
+            const payoutRes = await axios.patch(
+              `http://localhost:3500/admin/applications/${applicationId}/makepayout`
+            );
 
-              if (payoutRes && payoutRes.status === 200) {
-                setMessage(prev => prev + `\n✅ Payout initiated. Payout transfer id: ${payoutRes.data.payoutResponse?.id || payoutRes.data.transaction?._id}`);
-              } else {
-                setMessage(prev => prev + `\n⚠️ Payout failed or returned non-200 status`);
-              }
-            } catch (payoutErr) {
-              console.error('Payout error:', payoutErr);
-              setMessage(prev => prev + `\n⚠️ Payout error: ${payoutErr.response?.data?.message || payoutErr.message}`);
+            if (payoutRes.status === 200) {
+              setMessage("✅ Payment and payout completed successfully!");
+              fetchApprovedApplications();
+            } else {
+              setMessage("⚠️ Payout failed. Please check logs.");
             }
           } catch (verifyErr) {
-            console.error('Verify error:', verifyErr);
-            setMessage(`⚠️ Verification error: ${verifyErr.response?.data?.message || verifyErr.message}`);
+            setMessage(`⚠️ Error verifying payment: ${verifyErr.message}`);
           }
         },
         prefill: {
-          name: 'Admin',
-          email: 'admin@example.com',
+          name: "Admin",
+          email: "admin@example.com",
         },
-        theme: { color: '#ffae00' },
+        theme: { color: "#ffae00" },
       };
 
       if (window.Razorpay) {
         const rzp = new window.Razorpay(options);
         rzp.open();
       } else {
-        setMessage('⚠️ Razorpay SDK not available. Add <script src="https://checkout.razorpay.com/v1/checkout.js"></script> to your index.html');
+        setMessage("⚠️ Razorpay SDK not loaded. Add checkout.js script.");
       }
     } catch (err) {
-      console.error('Payment error:', err);
-      setMessage(`⚠️ Error: ${err.response?.data?.message || err.message}`);
-    } finally {
-      setLoading(false);
+      console.error("Payment error:", err);
+      setMessage(`⚠️ ${err.response?.data?.message || err.message}`);
     }
   };
 
-  let msgType = "info";
-  if (message.startsWith("✅")) msgType = "success";
-  else if (message.startsWith("❌")) msgType = "error";
-
   return (
-    <PaymentWrapper>
-      <BackButton onClick={onBack}>← Back to Dashboard</BackButton>
-      
-      <PaymentContainer>
-        <Title>Make Payment</Title>
-        
-        <form onSubmit={handlePayment}>
-          <FormGroup>
-            <Label htmlFor="applicationId">Application ID</Label>
-            <Input
-              type="text"
-              id="applicationId"
-              name="applicationId"
-              value={formData.applicationId}
-              onChange={handleChange}
-              placeholder="Enter application ID"
-              required
-            />
-          </FormGroup>
+    <Wrapper>
+      <Title>💳 Approved Applications - Make Payment</Title>
 
-          <FormGroup>
-            <Label htmlFor="amount">Amount (INR) - Optional</Label>
-            <Input
-              type="number"
-              id="amount"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              placeholder="Amount will be fetched from scholarship"
-              disabled
-            />
-          </FormGroup>
+      {loading && <div>Loading approved applications...</div>}
+      {!loading && applications.length === 0 && <div>No approved applications found</div>}
 
-          <PaymentButton type="submit" disabled={loading}>
-            {loading ? "Processing Payment..." : "Initiate Payment"}
-          </PaymentButton>
-        </form>
+      <List>
+        {applications.map((app) => (
+          <Card key={app._id}>
+            <Row>
+              <Label>Student:</Label> <Value>{app.studentname}</Value>
+            </Row>
+            <Row>
+              <Label>Email:</Label> <Value>{app.studentemail}</Value>
+            </Row>
+            <Row>
+              <Label>Institution:</Label> <Value>{app.institutionname}</Value>
+            </Row>
+            <Row>
+              <Label>Scholarship:</Label> <Value>{app.scholarshipId?.scholarshipName}</Value>
+            </Row>
+            <Row>
+              <Label>Amount:</Label> <Value>₹{app.scholarshipId?.scholarshipAmount}</Value>
+            </Row>
+            <Row>
+              <Label>Created:</Label>{" "}
+              <Value>{new Date(app.createdAt).toLocaleDateString()}</Value>
+            </Row>
 
-        {message && <Message type={msgType}>{message}</Message>}
-      </PaymentContainer>
-    </PaymentWrapper>
+            <Button onClick={() => handlePayment(app._id)}>Make Payment</Button>
+          </Card>
+        ))}
+      </List>
+
+      {message && <Message type={message.startsWith("❌") || message.startsWith("⚠️") ? "error" : "success"}>{message}</Message>}
+    </Wrapper>
   );
 };
 

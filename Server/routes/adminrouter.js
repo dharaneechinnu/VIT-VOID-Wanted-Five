@@ -8,6 +8,15 @@ const admincontroller = require("../controllers/admincontroller")
 router.post('/register', admincontroller.registerDonorRequest);
 router.post('/login', admincontroller.Loginadmin);
 router.post('/createscholarship', admincontroller.createScholarship);
+router.get('/getAllApplications/:adminId', admincontroller.getAllApplications);
+
+// Get applications by admin (donor) who created the scholarship
+// GET /admin/applications/by-admin/:adminId?page=1&limit=25&status=&scholarshipId=
+router.get('/applications/by-admin/:adminId', admincontroller.getApplicationsByAdminId);
+
+// Get single application by id but ensure it belongs to the admin
+router.get('/applications/by-admin/:adminId/:applicationId', admincontroller.getApplicationByAdminAndId);
+
 
 // View all scholarship applications (with optional filters)
 // GET /admin/applications?scholarshipId=...&status=...&page=1&limit=25
@@ -20,5 +29,22 @@ router.get('/applications/:applicationId', admincontroller.getApplicationDetails
 // Update a document inside an application (mark verified true and set application status)
 // PATCH /admin/applications/:applicationId/documents/:documentId
 router.patch('/applications/:applicationId/documents/:documentId', admincontroller.updateApplicationDocumentandapplication);
+
+
+// Make payout to verifier for a specific application
+// PATCH /admin/applications/:applicationId/makepayout
+router.patch('/applications/:applicationId/makepayout', admincontroller.makePayoutToVerifier);
+
+// Create a Razorpay order for an application (frontend will open checkout)
+// POST /admin/applications/:applicationId/create-order
+router.post('/applications/:applicationId/create-order', admincontroller.createOrderForApplication);
+
+// Verify payment from Razorpay and mark transaction as paid
+// POST /admin/applications/:applicationId/verify-payment
+router.post('/applications/:applicationId/verify-payment', admincontroller.verifyPaymentForApplication);
+
+// Create beneficiary (contact + fund_account) for application
+// POST /admin/applications/:applicationId/create-beneficiary
+router.post('/applications/:applicationId/create-beneficiary', admincontroller.createBeneficiaryForApplication);
 
 module.exports = router;

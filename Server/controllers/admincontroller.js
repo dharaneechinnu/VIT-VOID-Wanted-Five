@@ -7,7 +7,10 @@ const crypto = require('crypto');
 const { default: mongoose } = require('mongoose');
 const VerifierApplication = require('../models/verifierapplyform');
 const Transaction = require('../models/transaction');
-const { createPayout } = require('../services/razorpayService');
+const { createPayout, createOrder, capturePayment, createContact, createFundAccount } = require('../services/razorpayService');
+const nodemailer = require('nodemailer');
+const PDFDocument = require('pdfkit');
+const stream = require('stream');
 
 
 exports.registerDonorRequest = async (req, res) => {
@@ -111,7 +114,7 @@ try {
   }
   const admin = await Donor.findOne({username:username});
 
-  const ismatch = await bcrypt.compare(password,admin.password);
+  const ismatch =  bcrypt.compare(password,admin.password);
   if(!ismatch){
     res.status(400).json({"Message":"Password Incorrect"});
   }
@@ -245,7 +248,7 @@ exports.getApplicationDetails = async (req, res) => {
     const applicationId = req.params.applicationId || req.query.applicationId;
     if (!applicationId) return res.status(400).json({ message: 'applicationId is required' });
     if (!mongoose.Types.ObjectId.isValid(applicationId)) return res.status(400).json({ message: 'Invalid applicationId' });
-
+console.log("Application ID:", applicationId);
     const application = await VerifierApplication.findById(applicationId)
       .populate('scholarshipId')
       .populate('verifierId', 'institutionName contactEmail')
@@ -259,28 +262,25 @@ exports.getApplicationDetails = async (req, res) => {
   }
 };
 
+
+
+
+
 // Admin: update a document inside an application (mark verified/unverified or change docType)
 // PATCH /admin/applications/:applicationId/documents/:documentId
 exports.updateApplicationDocumentandapplication = async (req, res) => {
   try {
-    const { applicationId, documentId } = req.params;
+    const { applicationId } = req.params;
     const { status } = req.body;
     // status should be 'approved' or 'rejected' (string)
-    if (!applicationId || !documentId) return res.status(400).json({ message: 'applicationId and documentId are required in URL' });
+    if (!applicationId) return res.status(400).json({ message: 'applicationId is required in URL' });
     if (!mongoose.Types.ObjectId.isValid(applicationId)) return res.status(400).json({ message: 'Invalid applicationId' });
 
     const application = await VerifierApplication.findById(applicationId);
     if (!application) return res.status(404).json({ message: 'Application not found' });
 
-    const doc = application.documents.id(documentId);
-    if (!doc) return res.status(404).json({ message: 'Document not found' });
-
-    // Always set verified true
-    doc.verified = true;
-
-    // Optionally update docType if provided
-    if (req.body.docType !== undefined) doc.docType = req.body.docType;
-
+   
+    
     // Set application status if provided and valid
     if (status === 'approved' || status === 'rejected') {
       application.status = status;
@@ -289,7 +289,7 @@ exports.updateApplicationDocumentandapplication = async (req, res) => {
 
     await application.save();
 
-    res.status(200).json({ message: 'Document verified and application status updated', document: doc, applicationStatus: application.status });
+    res.status(200).json({ message: 'Document verified and application status updated', applicationStatus: application.status });
   } catch (error) {
     console.error('Error in updateApplicationDocumentandapplication:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -300,20 +300,64 @@ exports.updateApplicationDocumentandapplication = async (req, res) => {
 exports.makePayoutToVerifier = async (req, res) => {
   try {
     const { applicationId } = req.params;
+    console.debug('makePayoutToVerifier called for applicationId=', applicationId);
     if (!applicationId || !mongoose.Types.ObjectId.isValid(applicationId)) {
       return res.status(400).json({ message: 'Valid applicationId required in URL' });
     }
+
     const application = await VerifierApplication.findById(applicationId);
     if (!application) return res.status(404).json({ message: 'Application not found' });
-    const payout = application.payoutDetails;
+
+    const payout = application.payoutDetails || null;
     if (!payout || !payout.beneficiaryId) {
       return res.status(400).json({ message: 'No payoutDetails/beneficiaryId found for this application' });
     }
-    // Use scholarshipAmount from scholarship model
-    const scholarship = await Scholarship.findById(application.scholarshipId);
+
+    // Resolve scholarship id (could be populated or just id)
+    const scholarshipId = application.scholarshipId && application.scholarshipId._id ? application.scholarshipId._id : application.scholarshipId;
+    if (!scholarshipId || !mongoose.Types.ObjectId.isValid(scholarshipId)) {
+      return res.status(400).json({ message: 'Invalid scholarshipId associated with application' });
+    }
+
+    const scholarship = await Scholarship.findById(scholarshipId);
     if (!scholarship) return res.status(404).json({ message: 'Scholarship not found' });
-    const amount = scholarship.scholarshipAmount * 100; // INR to paise
-    // Create payout
+
+    const scholarshipAmount = Number(scholarship.scholarshipAmount || 0);
+    if (Number.isNaN(scholarshipAmount) || scholarshipAmount <= 0) {
+      return res.status(400).json({ message: 'Invalid scholarship amount' });
+    }
+
+    const amount = Math.round(scholarshipAmount * 100); // INR to paise
+
+    // Prepare payout payload
+    const referenceId = `app_${application._id}`;
+    const studentName = application.studentname || application.studentName || application.student?.name || 'student';
+
+    // Basic validation: prefer Razorpay fund_account ids (fa_), but allow legacy beneficiary ids (bene_)
+    // If neither format, log and return a helpful error.
+    const bid = payout.beneficiaryId;
+    if (typeof bid !== 'string' || !(bid.startsWith('fa_') || bid.startsWith('bene_'))) {
+      const msg = 'Invalid beneficiaryId for payouts. Expected a Razorpay fund_account id (starts with "fa_") or legacy beneficiary id (starts with "bene_"). Please create/store a correct beneficiary id in application.payoutDetails.beneficiaryId.';
+      console.error('Payout aborted - invalid beneficiaryId:', bid);
+      // Log a failed transaction record for visibility
+      try {
+        await Transaction.create({
+          applicationId: application._id,
+          beneficiaryId: bid,
+          amount,
+          currency: 'INR',
+          status: 'failed',
+          failureReason: msg,
+          payoutDetails: payout,
+          rawResponse: { note: 'invalid beneficiaryId' },
+        });
+      } catch (logErr) {
+        console.error('Failed to log failed transaction (invalid beneficiary):', logErr);
+      }
+
+      return res.status(400).json({ message: msg, beneficiaryId: bid });
+    }
+
     let payoutResp;
     try {
       payoutResp = await createPayout({
@@ -322,52 +366,558 @@ exports.makePayoutToVerifier = async (req, res) => {
         currency: 'INR',
         mode: 'IMPS',
         purpose: 'scholarship',
-        referenceId: `app_${application._id}`,
-        narration: `Scholarship payout for ${application.studentname}`,
+        referenceId,
+        narration: `Scholarship payout for ${studentName}`,
       });
+      console.debug('createPayout response:', payoutResp);
     } catch (err) {
-      // Log failed transaction
-      await Transaction.create({
-        applicationId: application._id,
-        beneficiaryId: payout.beneficiaryId,
+      // Log full error object for debugging
+      console.error('createPayout error object:', err && err.response ? err.response : err);
+
+      // Derive a useful message and details
+      const errMsg = err && (err.message || (err.response && (typeof err.response === 'string' ? err.response : JSON.stringify(err.response))) || JSON.stringify(err));
+      const errDetails = err && err.response ? err.response : err;
+
+      // Log failed transaction with a readable failureReason
+      try {
+        await Transaction.create({
+          applicationId: application._id,
+          beneficiaryId: payout.beneficiaryId,
+          amount,
+          currency: 'INR',
+          status: 'failed',
+          failureReason: errMsg,
+          payoutDetails: payout,
+          rawResponse: errDetails,
+        });
+      } catch (logErr) {
+        console.error('Failed to log failed transaction:', logErr);
+      }
+
+      return res.status(500).json({ message: 'Razorpay payout failed', error: errMsg, details: errDetails });
+    }
+
+    // Create transaction record (be defensive about payoutResp shape)
+    const txnPayload = {
+      applicationId: application._id,
+      beneficiaryId: payout.beneficiaryId,
+      amount,
+      currency: 'INR',
+      status: payoutResp?.status || 'processing',
+      transferId: payoutResp?.id || payoutResp?.transfer_id || null,
+      initiatedAt: payoutResp?.created_at ? new Date(Number(payoutResp.created_at) * 1000) : new Date(),
+      payoutDetails: payout,
+      rawResponse: payoutResp,
+    };
+
+    let txn;
+    try {
+      txn = await Transaction.create(txnPayload);
+    } catch (txErr) {
+      console.error('Failed to create transaction record:', txErr);
+      // continue - we still want to return payout response
+    }
+
+    // Update application status/history
+    try {
+      application.status = 'funded';
+      application.payoutHistory = application.payoutHistory || [];
+      application.payoutHistory.push({
+        transferId: txnPayload.transferId,
         amount,
         currency: 'INR',
-        status: 'failed',
-        failureReason: err.message,
-        payoutDetails: payout,
-        rawResponse: err,
+        status: txnPayload.status,
+        initiatedAt: txnPayload.initiatedAt,
+        completedAt: payoutResp?.funded_at ? new Date(Number(payoutResp.funded_at) * 1000) : undefined,
+        failureReason: payoutResp?.failure_reason,
       });
-      return res.status(500).json({ message: 'Razorpay payout failed', error: err.message });
+      // Also mark donorDecision as funded and record action time
+      try {
+        application.donorDecision = 'funded';
+        application.donorActionAt = new Date();
+        // Update fundedraised (store in rupees, add to existing if present)
+        const paidPaise = amount || (txnPayload && txnPayload.amount) || 0;
+        const paidRupees = Number((paidPaise / 100).toFixed(2));
+        application.fundedraised = (Number(application.fundedraised || 0) + paidRupees);
+      } catch (setErr) {
+        console.warn('Could not update donorDecision/fundedraised on application:', setErr);
+      }
+      await application.save();
+    } catch (appErr) {
+      console.error('Failed to update application payout history:', appErr);
     }
-    // Log transaction
+
+    return res.status(200).json({ message: 'Payout initiated', transaction: txn || null, payoutResponse: payoutResp });
+  } catch (error) {
+    console.error('Error in makePayoutToVerifier:', error);
+    return res.status(500).json({ message: 'Server error', error: error && error.message ? error.message : String(error) });
+  }
+};
+
+// Create a Razorpay order for frontend Checkout and record an 'order_created' transaction
+exports.createOrderForApplication = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    if (!applicationId || !mongoose.Types.ObjectId.isValid(applicationId)) return res.status(400).json({ message: 'Valid applicationId required in URL' });
+
+    const application = await VerifierApplication.findById(applicationId);
+    if (!application) return res.status(404).json({ message: 'Application not found' });
+
+    const scholarshipId = application.scholarshipId && application.scholarshipId._id ? application.scholarshipId._id : application.scholarshipId;
+    if (!scholarshipId || !mongoose.Types.ObjectId.isValid(scholarshipId)) return res.status(400).json({ message: 'Invalid scholarshipId associated with application' });
+
+    const scholarship = await Scholarship.findById(scholarshipId);
+    if (!scholarship) return res.status(404).json({ message: 'Scholarship not found' });
+
+    const scholarshipAmount = Number(scholarship.scholarshipAmount || 0);
+    if (Number.isNaN(scholarshipAmount) || scholarshipAmount <= 0) {
+      return res.status(400).json({ message: 'Invalid scholarship amount' });
+    }
+
+    // If the application already has a fundedraised value set, prefer that as the amount
+    // fundedraised is stored in rupees (Number). Otherwise fall back to scholarship amount.
+    let amountRupees = scholarshipAmount;
+    if (typeof application.fundedraised !== 'undefined' && application.fundedraised !== null) {
+      const fr = Number(application.fundedraised);
+      if (!Number.isNaN(fr) && fr > 0) {
+        amountRupees = fr;
+      }
+    }
+
+    const amount = Math.round(amountRupees * 100); // convert rupees to paise
+
+
+    // Ensure payout beneficiary exists on application (required to create transaction)
+    const payout = application.payoutDetails || null;
+    if (!payout || !payout.beneficiaryId) {
+      return res.status(400).json({ message: 'No payoutDetails/beneficiaryId found for this application' });
+    }
+
+    // Create Razorpay order
+    const order = await createOrder({ amount, currency: 'INR', receipt: `app_${application._id}`, notes: { applicationId: application._id.toString() } });
+
+    // Record a transaction tied to this application and order (include beneficiaryId)
     const txn = await Transaction.create({
       applicationId: application._id,
       beneficiaryId: payout.beneficiaryId,
       amount,
       currency: 'INR',
-      status: payoutResp.status || 'processing',
-      transferId: payoutResp.id,
-      initiatedAt: new Date(payoutResp.created_at * 1000),
-      payoutDetails: payout,
-      rawResponse: payoutResp,
+      status: 'order_created',
+      orderId: order.id,
+      rawResponse: order,
     });
-    // Optionally update application status/history
-    application.status = 'funded';
-    application.payoutHistory = application.payoutHistory || [];
-    application.payoutHistory.push({
-      transferId: payoutResp.id,
-      amount,
-      currency: 'INR',
-      status: payoutResp.status,
-      initiatedAt: new Date(payoutResp.created_at * 1000),
-      completedAt: payoutResp.funded_at ? new Date(payoutResp.funded_at * 1000) : undefined,
-      failureReason: payoutResp.failure_reason,
-    });
-    await application.save();
-    res.status(200).json({ message: 'Payout initiated', transaction: txn, payoutResponse: payoutResp });
+
+    // Return order and transaction along with publishable key for frontend
+    const key = process.env.RAZORPAY_TEST_KEY_ID || process.env.RAZORPAY_KEY_ID || 'rzp_test_your_key_here';
+
+    return res.status(201).json({ message: 'Order created', order, transaction: txn, key });
   } catch (error) {
-    console.error('Error in makePayoutToVerifier:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error in createOrderForApplication:', error);
+    return res.status(500).json({ message: 'Server error', error: error && error.message ? error.message : String(error) });
+  }
+};
+
+// Verify Razorpay payment signature and mark transaction as paid
+exports.verifyPaymentForApplication = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+
+    if (!applicationId || !mongoose.Types.ObjectId.isValid(applicationId)) return res.status(400).json({ message: 'Valid applicationId required in URL' });
+    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) return res.status(400).json({ message: 'Missing payment fields' });
+
+    // Choose secret depending on test mode flag (mirror service logic)
+    const IS_TEST_MODE = process.env.RAZORPAY_TEST_MODE === 'true';
+    const RAZORPAY_KEY_SECRET = IS_TEST_MODE ? process.env.RAZORPAY_TEST_KEY_SECRET : process.env.RAZORPAY_KEY_SECRET;
+    if (!RAZORPAY_KEY_SECRET) return res.status(500).json({ message: 'Razorpay secret not configured' });
+
+    const generated_signature = crypto.createHmac('sha256', RAZORPAY_KEY_SECRET).update(`${razorpay_order_id}|${razorpay_payment_id}`).digest('hex');
+    if (generated_signature !== razorpay_signature) {
+      return res.status(400).json({ message: 'Invalid signature' });
+    }
+
+    // Optionally capture payment if needed (most flows use payment_capture=1 so it's already captured)
+    // We'll attempt to capture if capturePayment is available and desired; skip otherwise.
+
+    // Fetch application to get beneficiary/amount if needed
+    const application = await VerifierApplication.findById(applicationId);
+    if (!application) return res.status(404).json({ message: 'Application not found' });
+
+    const payout = application.payoutDetails || null;
+    if (!payout || !payout.beneficiaryId) {
+      return res.status(400).json({ message: 'No payoutDetails/beneficiaryId found for this application' });
+    }
+
+    const scholarshipId = application.scholarshipId && application.scholarshipId._id ? application.scholarshipId._id : application.scholarshipId;
+    let amount = undefined;
+    if (scholarshipId && mongoose.Types.ObjectId.isValid(scholarshipId)) {
+      const scholarship = await Scholarship.findById(scholarshipId);
+      const scholarshipAmount = Number(scholarship?.scholarshipAmount || 0);
+      if (!Number.isNaN(scholarshipAmount) && scholarshipAmount > 0) {
+        amount = Math.round(scholarshipAmount * 100);
+      }
+    }
+
+    // Update transaction record
+    const txn = await Transaction.findOne({ applicationId, orderId: razorpay_order_id });
+    if (!txn) {
+      // create a transaction if missing (include beneficiaryId and amount if available)
+      const newTxn = await Transaction.create({
+        applicationId,
+        beneficiaryId: payout.beneficiaryId,
+        amount: amount || 0,
+        currency: 'INR',
+        status: 'paid',
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        rawResponse: req.body,
+      });
+      return res.status(200).json({ message: 'Payment verified', transaction: newTxn });
+    }
+
+    txn.status = 'paid';
+    txn.paymentId = razorpay_payment_id;
+    txn.paidAt = new Date();
+    txn.rawResponse = txn.rawResponse || {};
+    txn.rawResponse.paymentVerification = req.body;
+    await txn.save();
+    // Mark application as funded (donor decision) and record action time
+    try {
+      application.donorDecision = 'funded';
+      application.donorActionAt = new Date();
+      // Record funded amount on application (convert paise -> rupees)
+      try {
+        const paidPaise = (typeof amount !== 'undefined' && amount) ? amount : (txn && txn.amount ? txn.amount : 0);
+        application.fundedraised = Number((paidPaise / 100).toFixed(2));
+      } catch (setAmtErr) {
+        console.warn('Could not set application.fundedraised:', setAmtErr);
+      }
+      await application.save();
+      console.debug('Application donorDecision updated to funded for', applicationId);
+    } catch (appUpdateErr) {
+      console.error('Failed to update application donorDecision to funded:', appUpdateErr);
+    }
+
+    // Send receipt emails to student and verifier (best-effort) with PDF attachment
+    (async function sendReceiptsWithPdf() {
+      try {
+        // Pull latest application with verifier populated for emails
+        const appPop = await VerifierApplication.findById(applicationId).populate('verifierId', 'contactEmail contactperson');
+
+        const studentEmail = appPop?.studentemail || appPop?.student?.email || (appPop?.studentid && appPop.studentid.email);
+        const verifierEmail = appPop?.payoutDetails?.email || appPop?.verifierId?.contactEmail;
+
+        const amountDisplay = (amount || txn.amount || 0) / 100;
+        const date = new Date().toLocaleString();
+
+        const subject = `Scholarship payment receipt — Application ${applicationId}`;
+        const plainText = `Payment successful for Application ${applicationId}\n\nTransaction ID: ${txn._id || txn.paymentId}\nPayment ID: ${txn.paymentId || razorpay_payment_id}\nOrder ID: ${txn.orderId || razorpay_order_id}\nAmount: ₹${amountDisplay}\nDate: ${date}\n\nIf you have questions, contact support.`;
+
+        // Generate PDF receipt as a Buffer
+        const generatePdfBuffer = () => new Promise((resolve, reject) => {
+          try {
+            const doc = new PDFDocument({ size: 'A4', margin: 50 });
+            const chunks = [];
+            const passthrough = new stream.PassThrough();
+            doc.pipe(passthrough);
+            passthrough.on('data', (chunk) => chunks.push(chunk));
+            passthrough.on('end', () => resolve(Buffer.concat(chunks)));
+
+            // Header
+            doc.fontSize(18).text('Payment Receipt', { align: 'center' });
+            doc.moveDown();
+
+            // Application / Transaction details
+            doc.fontSize(12).text(`Application ID: ${applicationId}`);
+            doc.text(`Transaction ID: ${txn._id || txn.paymentId || 'N/A'}`);
+            doc.text(`Payment ID: ${txn.paymentId || razorpay_payment_id || 'N/A'}`);
+            doc.text(`Order ID: ${txn.orderId || razorpay_order_id || 'N/A'}`);
+            doc.text(`Date: ${date}`);
+            doc.moveDown();
+
+            // Payer / Payee
+            const payerName = appPop?.studentname || appPop?.student?.name || appPop?.studentid?.name || 'Student';
+            const payeeName = appPop?.verifierId?.contactperson || appPop?.payoutDetails?.accountHolderName || 'Verifier';
+            doc.text(`Payer (Student): ${payerName}`);
+            doc.text(`Payer Email: ${studentEmail || 'N/A'}`);
+            doc.moveDown();
+            doc.text(`Payee (Verifier): ${payeeName}`);
+            doc.text(`Payee Email: ${verifierEmail || 'N/A'}`);
+            doc.moveDown();
+
+            // Amount
+            doc.fontSize(14).text(`Amount Paid: ₹${amountDisplay}`, { continued: false });
+            doc.moveDown(2);
+
+            // Footer / notes
+            doc.fontSize(10).text('Thank you for using our scholarship disbursement service.', { align: 'left' });
+            doc.text('This is a computer-generated receipt.', { align: 'left' });
+
+            doc.end();
+          } catch (e) {
+            reject(e);
+          }
+        });
+
+        const pdfBuffer = await generatePdfBuffer();
+
+        // Send via Gmail helper (uses GMAIL_USER + PASS env vars). Falls back to error if creds missing.
+        const sentRecipients = [];
+        if (studentEmail) {
+          try {
+            await sendReceiptEmailUsingGmail({ to: studentEmail, subject, text: plainText, attachments: [{ filename: `receipt_${applicationId}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }] });
+            console.debug('Receipt email (pdf) sent to student:', studentEmail);
+            sentRecipients.push(studentEmail);
+          } catch (err) {
+            console.error('Failed to send student receipt (pdf):', err);
+          }
+        }
+
+        // Optionally send to verifier if available and different from student
+        if (verifierEmail && verifierEmail !== studentEmail) {
+          try {
+            await sendReceiptEmailUsingGmail({ to: verifierEmail, subject, text: plainText, attachments: [{ filename: `receipt_${applicationId}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }] });
+            console.debug('Receipt email (pdf) sent to verifier:', verifierEmail);
+            sentRecipients.push(verifierEmail);
+          } catch (err) {
+            console.error('Failed to send verifier receipt (pdf):', err);
+          }
+        }
+
+        // Print a consolidated success message after attempting sends
+        if (sentRecipients.length > 0) {
+          console.info(`Receipt email(s) successfully sent for application ${applicationId} to: ${sentRecipients.join(', ')}`);
+        } else {
+          console.warn(`No receipt emails were sent for application ${applicationId}. Check SMTP/Gmail configuration.`);
+        }
+      } catch (mailErr) {
+        console.error('Error sending receipts (pdf):', mailErr);
+      }
+    })();
+
+    return res.status(200).json({ message: 'Payment verified', transaction: txn });
+  } catch (error) {
+    console.error('Error in verifyPaymentForApplication:', error);
+    return res.status(500).json({ message: 'Server error', error: error && error.message ? error.message : String(error) });
+  }
+};
+
+// Create a Razorpay contact + fund_account for an application and save fa_ id
+exports.createBeneficiaryForApplication = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    if (!applicationId || !mongoose.Types.ObjectId.isValid(applicationId)) return res.status(400).json({ message: 'Valid applicationId required in URL' });
+
+    const application = await VerifierApplication.findById(applicationId);
+    if (!application) return res.status(404).json({ message: 'Application not found' });
+
+    // Expect bank details in body
+    const { name, email, contact, account_number, ifsc } = req.body;
+    if (!name || !account_number || !ifsc) return res.status(400).json({ message: 'Missing required bank details: name, account_number, ifsc' });
+
+    // Create contact
+    const contactResp = await createContact({ name, email, contact, type: 'employee' });
+
+    // Create fund_account
+    const faResp = await createFundAccount({
+      contact_id: contactResp.id,
+      account_type: 'bank_account',
+      bank_account: {
+        name,
+        ifsc,
+        account_number,
+      },
+    });
+
+    // Save on application.payoutDetails
+    application.payoutDetails = application.payoutDetails || {};
+    application.payoutDetails.beneficiaryId = faResp.id;
+    application.payoutDetails.accountHolderName = name;
+    application.payoutDetails.maskedAccountNumber = account_number.slice(-4).padStart(account_number.length, '*');
+    application.payoutDetails.ifsc = ifsc;
+    application.payoutDetails.email = email || application.payoutDetails.email;
+    application.payoutDetails.beneficiaryVerified = true;
+    await application.save();
+
+    return res.status(201).json({ message: 'Beneficiary created', fundAccount: faResp, contact: contactResp, application });
+  } catch (error) {
+    console.error('Error in createBeneficiaryForApplication:', error);
+    return res.status(500).json({ message: 'Server error', error: error && error.message ? error.message : String(error) });
+  }
+};
+
+
+
+// Student/Verifier: apply to a scholarship (create a VerifierApplication)
+// Accepts either :scholarshipId in params or scholarshipId in body
+exports.applyToScholarship = async (req, res) => {
+  try {
+    const scholarshipId = req.params.scholarshipId || req.body.scholarshipId;
+    if (!scholarshipId || !mongoose.Types.ObjectId.isValid(scholarshipId)) {
+      return res.status(400).json({ message: 'Valid scholarshipId is required' });
+    }
+
+    // Validate scholarship exists
+    const scholarship = await Scholarship.findById(scholarshipId);
+    if (!scholarship) return res.status(404).json({ message: 'Scholarship not found' });
+
+    // Required applicant fields
+    const {
+      verifierId,
+      studentname,
+      studentemail,
+      studentid,
+      gender,
+      institutionname,
+      classoryear,
+      familyIncome,
+      tenthMarks,
+      twelfthMarks,
+      semesterCgpa,
+      documents,
+      payoutDetails,
+      remarks,
+    } = req.body;
+
+    // Basic validation for required fields
+    if (!verifierId || !mongoose.Types.ObjectId.isValid(verifierId)) return res.status(400).json({ message: 'Valid verifierId is required' });
+    if (!studentname || !studentemail || !studentid) return res.status(400).json({ message: 'studentname, studentemail and studentid are required' });
+    if (!gender) return res.status(400).json({ message: 'gender is required' });
+    if (!institutionname) return res.status(400).json({ message: 'institutionname is required' });
+    if (typeof familyIncome === 'undefined' || familyIncome === null) return res.status(400).json({ message: 'familyIncome is required' });
+
+    const applicationData = {
+      verifierId,
+      scholarshipId,
+      // Resolve adminId from the scholarship (do not accept from frontend)
+      adminId: scholarship.createdBy || undefined,
+      studentname,
+      studentemail,
+      studentid,
+      gender,
+      institutionname,
+      classoryear: classoryear || '',
+      tenthMarks,
+      twelfthMarks,
+      semesterCgpa: Array.isArray(semesterCgpa) ? semesterCgpa : [],
+      familyIncome: Number(familyIncome),
+      firstGenGraduate: !!req.body.firstGenGraduate,
+      documents: Array.isArray(documents) ? documents : [],
+      payoutDetails: payoutDetails || {},
+      remarks: remarks || '',
+      status: 'submitted',
+    };
+
+    const newApp = new VerifierApplication(applicationData);
+    await newApp.save();
+
+    return res.status(201).json({ message: 'Application submitted', application: newApp });
+  } catch (error) {
+    console.error('Error in applyToScholarship:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+// Get all applications for an admin
+exports.getAllApplications = async (req, res) => {
+  try {
+    const adminId = req.params.adminId;
+
+    if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) {
+      return res.status(400).json({ message: 'Valid adminId is required' });
+    }
+
+    // Fetch all verifier applications (you can filter further by admin logic if needed)
+    const skip = 0;
+    const applications = await VerifierApplication.find({ adminId })
+      .populate('scholarshipId', 'scholarshipName providerName scholarshipAmount')
+      .populate('verifierId', 'institutionname contactEmail')
+      .populate('studentid', 'name email')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      message: 'Applications fetched successfully',
+      total: applications.length,
+      applications,
+    });
+  } catch (error) {
+    console.error('Error in getAllApplications:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+
+// New: Get paginated applications for an admin (donor) resolved via adminId stored on applications
+exports.getApplicationsByAdminId = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const { page = 1, limit = 25, status, scholarshipId } = req.query;
+
+    if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: 'Valid adminId is required' });
+
+    const filter = { adminId };
+    if (status) filter.status = status;
+    if (scholarshipId && mongoose.Types.ObjectId.isValid(scholarshipId)) filter.scholarshipId = scholarshipId;
+
+    const p = Math.max(parseInt(page, 10) || 1, 1);
+    const l = Math.max(parseInt(limit, 10) || 25, 1);
+    const skip = (p - 1) * l;
+
+    const [total, applications] = await Promise.all([
+      VerifierApplication.countDocuments(filter),
+      VerifierApplication.find(filter)
+        .populate('scholarshipId', 'scholarshipName providerName scholarshipAmount applicationDeadline')
+        .populate('verifierId', 'institutionname contactEmail')
+        .populate('studentid', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(l),
+    ]);
+
+    return res.status(200).json({ total, page: p, limit: l, applications });
+  } catch (error) {
+    console.error('Error in getApplicationsByAdminId:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// New: Get a single application that belongs to a given adminId (safety check)
+exports.getApplicationByAdminAndId = async (req, res) => {
+  try {
+    const { adminId, applicationId } = req.params;
+    if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: 'Valid adminId is required' });
+    if (!applicationId || !mongoose.Types.ObjectId.isValid(applicationId)) return res.status(400).json({ message: 'Valid applicationId is required' });
+
+    const application = await VerifierApplication.findOne({ _id: applicationId, adminId })
+      .populate('scholarshipId')
+      .populate('verifierId', 'institutionname contactEmail')
+      .populate('studentid', 'name email');
+
+    if (!application) return res.status(404).json({ message: 'Application not found for this admin' });
+
+    return res.status(200).json({ application });
+  } catch (error) {
+    console.error('Error in getApplicationByAdminAndId:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Admin/Verifier: get all applications applied for a scholarship
+// GET /admin/scholarships/:scholarshipId/applications
+exports.getApplicationsForScholarship = async (req, res) => {
+  try {
+    const { scholarshipId } = req.params;
+    if (!scholarshipId || !mongoose.Types.ObjectId.isValid(scholarshipId)) return res.status(400).json({ message: 'Valid scholarshipId required in URL' });
+
+    const applications = await VerifierApplication.find({ scholarshipId })
+      .populate('scholarshipId')
+      .populate('verifierId', 'institutionName contactEmail')
+      .populate('studentid', 'name email')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({ total: applications.length, applications });
+  } catch (error) {
+    console.error('Error in getApplicationsForScholarship:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 

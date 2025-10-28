@@ -29,11 +29,18 @@ const AdminLogin = () => {
       // 🟢 API endpoint for Admin Login
       const res = await axios.post("http://localhost:3500/admin/login", formData);
 
-      if (res.status === 200) {
+      if (res.status === 200 && res.data) {
+        // Persist auth info in localStorage for admin session
+        try {
+          localStorage.setItem('adminAuth', JSON.stringify(res.data));
+        } catch (e) {
+          console.warn('Could not write adminAuth to localStorage', e);
+        }
+
         setMessage("✅ Admin login successful! Redirecting to dashboard...");
         setTimeout(() => {
           navigate("/Admin/Dashboard");
-        }, 1200);
+        }, 700);
       } else {
         setMessage("❌ Invalid username or password.");
       }

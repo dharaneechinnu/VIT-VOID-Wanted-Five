@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 
 const VerifierLogin = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,7 @@ const VerifierLogin = () => {
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -28,6 +30,14 @@ const VerifierLogin = () => {
       if (res.status === 200) {
         setMessage("✅ Login successful!");
         console.log("Verifier Logged In:", res.data);
+        // store full response in localStorage for session
+        try {
+          localStorage.setItem('verifierAuth', JSON.stringify(res.data));
+        } catch (e) {
+          console.warn('Could not write verifierAuth to localStorage', e);
+        }
+        // navigate to verifier dashboard
+        if (navigate) navigate('/Verifier/Dashboard');
       } else {
         setMessage("❌ Invalid username or password.");
       }

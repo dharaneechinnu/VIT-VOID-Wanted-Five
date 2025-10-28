@@ -11,6 +11,9 @@ router.post('/login', verifierController.loginVerifier);
 router.get('/getallscholarships', verifierController.viewAllScholarships);
 // Apply for scholarship with JSON data only (no files)
 router.post('/applyscholarship', verifierController.applyForScholarship);
+router.get('/viewapplicationbyid', verifierController.viewapplicationbyid);
+// Get applications by verifierId or applicationId (supports pagination)
+router.get('/getapplicationstatus', verifierController.getApplicationStatus);
 // Upload documents for an existing application (form-data with files)
 // Use path param for application id: /uploaddocuments/:applicationId
 router.post('/uploaddocuments/:applicationId', upload.array('documents', 10), verifierController.uploadDocuments);
