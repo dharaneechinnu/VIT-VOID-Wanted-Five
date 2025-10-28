@@ -8,13 +8,17 @@ import VerifierLogin from "./Verifier/VerifierLogin";
 import VerifierLoginDash from "./Verifier/VerifierLoginDash";
 
 
+
 // 🎓 Student Components
 import StudentLogin from "./student/StudentLogin";
 import StudentRegister from "./student/StudentRegister";
+import StudentDashboard from "./student/StudentDashboard";
 
 // 🧑‍💼 Admin Components
 import AdminLogin from "./admin/AdminLogin";
 import AdminRegister from "./admin/AdminRegister";
+
+
 
 function App() {
   return (
@@ -43,6 +47,10 @@ function App() {
 
         {/* 📝 Admin Register */}
         <Route path="/Admin/Register" element={<AdminRegister />} />
+
+        {/* 📝 Student Dashboard */}
+        <Route path="/Student/Dashboard" element={<StudentDashboard />} />
+
       </Routes>
     </Router>
   );
