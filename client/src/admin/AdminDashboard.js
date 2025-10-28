@@ -5,70 +5,103 @@ import ViewApplications from './ViewApplications';
 import CreateScholar from './CreateScholar';
 import { useNavigate } from 'react-router-dom';
 
-const drawerWidth = 220;
+const drawerWidth = 250;
 
+/* ---- WRAPPER ---- */
 const DashboardWrapper = styled.div`
   display: flex;
   min-height: 100vh;
-  background: #181818;
+  background: #f9fbff; /* soft white-blue background */
   font-family: 'Poppins', sans-serif;
 `;
 
+/* ---- SIDEBAR ---- */
 const Sidebar = styled.aside`
   width: ${drawerWidth}px;
-  background: #0b1220;
-  border-right: 1px solid rgba(255,255,255,0.03);
-  padding: 24px;
+  background: #ffffff;
+  border-right: 2px solid #dceeff;
+  padding: 24px 20px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* align to left */
+  justify-content: flex-start; /* push everything to top */
+  gap: 18px; /* neat spacing between boxes */
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  overflow-y: auto;
 `;
 
+/* ---- LOGO ---- */
 const Logo = styled.div`
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  color: #ffae00;
-  margin-bottom: 24px;
+  color: #00a2ff;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  width: 100%;
+  text-align: left;
 `;
 
+/* ---- NAVIGATION ---- */
 const Nav = styled.nav`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  width: 100%;
 `;
 
 const NavButton = styled.button`
-  background: ${props => (props.active ? 'linear-gradient(90deg,#ffae00,#ff8533)' : 'transparent')};
-  color: ${props => (props.active ? '#081018' : '#e6eef8')};
-  border: ${props => (props.active ? 'none' : '1px solid rgba(255,255,255,0.04)')};
-  padding: 12px 16px;
+  background: ${(props) => (props.active ? "#00a2ff" : "#ffffff")};
+  color: ${(props) => (props.active ? "#ffffff" : "#00a2ff")};
+  border: 2px solid #00a2ff;
+  padding: 10px 14px;
   border-radius: 8px;
+  width: 100%;
   text-align: left;
   font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.15s ease;
+  box-shadow: ${(props) =>
+    props.active ? "0 3px 6px rgba(0, 162, 255, 0.2)" : "none"};
 
   &:hover {
-    transform: translateY(-1px);
+    background: ${(props) => (props.active ? "#0092e5" : "#eaf5ff")};
   }
 `;
 
+/* ---- MAIN CONTENT ---- */
 const Content = styled.main`
   flex: 1;
-  padding: 28px;
+  background: #ffffff;
+  padding: 40px;
   box-sizing: border-box;
+  border-left: 2px solid #eaf3ff;
+  display: flex;
+  flex-direction: column;
 `;
 
+/* ---- HEADER ---- */
 const Header = styled.div`
-  display:flex;
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #eaf3ff;
+  padding-bottom: 10px;
 `;
 
 const Title = styled.h1`
-  font-size: 22px;
-  color: #fff;
+  font-size: 24px;
+  color: #00a2ff;
   margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.4px;
 `;
+
+
+
+
 
   const AdminDashboard = () => {
     const [active, setActive] = useState('view');
@@ -112,27 +145,78 @@ const Title = styled.h1`
     return (
       <DashboardWrapper>
         <Sidebar>
-          <Logo>Admin Panel</Logo>
-          <div style={{marginBottom:12, color:'#9fb0c8', fontSize:13}}>
-            {storedAdmin ? (
-              <div>
-                <div style={{fontWeight:700, color:'#fff'}}>{storedAdmin.orgName || storedAdmin.name || 'Admin'}</div>
-                <div style={{fontSize:12}}>{storedAdmin.contactEmail || storedAdmin.email || ''}</div>
-              </div>
-            ) : (
-              <div style={{fontSize:12}}>Not signed in</div>
-            )}
-          </div>
-          <Nav>
-            <NavButton active={active === 'view'} onClick={() => setActive('view')}>View Applications</NavButton>
-            <NavButton active={active === 'create'} onClick={() => setActive('create')}>Create Scholar</NavButton>
-            <NavButton active={active === 'payment'} onClick={() => setActive('payment')}>Make Payment</NavButton>
-          </Nav>
+  <Logo>Admin Panel</Logo>
 
-          <div style={{marginTop:24}}>
-            <button onClick={handleLogout} style={{padding:'10px 12px', borderRadius:8, background:'#ff4d4f', color:'#fff', border:'none', cursor:'pointer'}}>Logout</button>
-          </div>
-        </Sidebar>
+  {/* 👇 ADD EMAIL BOX HERE */}
+  <div
+    style={{
+      background: '#f4faff',
+      border: '2px solid #bde0ff',
+      borderRadius: '10px',
+      padding: '12px 14px',
+      marginBottom: '24px',
+      textAlign: 'left',
+      boxShadow: '0 2px 6px rgba(0, 162, 255, 0.1)',
+    }}
+  >
+    {storedAdmin ? (
+      <div>
+        <div
+          style={{
+            fontWeight: 700,
+            color: '#00a2ff',
+            fontSize: '14px',
+            marginBottom: '4px',
+          }}
+        >
+          {storedAdmin.orgName || storedAdmin.name || 'Admin'}
+        </div>
+        <div
+          style={{
+            fontSize: '13px',
+            color: '#1e40af',
+            wordBreak: 'break-word',
+          }}
+        >
+          {storedAdmin.contactEmail || storedAdmin.email || 'No Email Available'}
+        </div>
+      </div>
+    ) : (
+      <div style={{ fontSize: '13px', color: '#64748b' }}>Not signed in</div>
+    )}
+  </div>
+  
+
+  <Nav>
+    <NavButton active={active === 'view'} onClick={() => setActive('view')}>
+      View Applications
+    </NavButton>
+    <NavButton active={active === 'create'} onClick={() => setActive('create')}>
+      Create Scholar
+    </NavButton>
+    <NavButton active={active === 'payment'} onClick={() => setActive('payment')}>
+      Make Payment
+    </NavButton>
+  </Nav>
+
+  <div style={{ marginTop: 24 }}>
+    <button
+      onClick={handleLogout}
+      style={{
+        padding: '10px 12px',
+        borderRadius: 8,
+        background: '#00a2ff',
+        color: '#fff',
+        border: 'none',
+        cursor: 'pointer',
+        fontWeight: 600,
+      }}
+    >
+      Logout
+    </button>
+  </div>
+</Sidebar>
+
 
         <Content>
           <Header>

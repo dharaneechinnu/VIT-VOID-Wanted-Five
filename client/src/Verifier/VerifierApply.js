@@ -6,32 +6,37 @@ import styled from "styled-components";
 // ---------- Styled Components ----------
 const PageContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa, #eaeef3);
+  background: linear-gradient(135deg, #f9fbff, #e6f3ff); /* subtle white-blue gradient */
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 40px;
 `;
 
+/* ---- Form Card ---- */
 const FormCard = styled.div`
   width: 100%;
   max-width: 900px;
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 25px rgba(0, 162, 255, 0.12);
   overflow: hidden;
+  border: 2px solid #bde0ff;
 `;
 
+/* ---- Title Bar ---- */
 const TitleBar = styled.div`
-  background: linear-gradient(90deg, #ffae00, #ff8533);
-  color: #081018;
+  background: linear-gradient(90deg, #00a2ff, #4db8ff); /* sky blue gradient */
+  color: #ffffff;
   font-size: 1.6rem;
   font-weight: 700;
   text-align: center;
   padding: 16px;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
 `;
 
+/* ---- Form Body ---- */
 const Form = styled.form`
   padding: 30px 40px;
   display: flex;
@@ -39,6 +44,7 @@ const Form = styled.form`
   gap: 20px;
 `;
 
+/* ---- Grid Layout ---- */
 const Grid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -49,83 +55,101 @@ const Grid = styled.div`
   }
 `;
 
+/* ---- Labels ---- */
 const Label = styled.label`
   font-weight: 600;
-  color: #333;
+  color: #007bff;
   margin-bottom: 6px;
 `;
 
+/* ---- Input Fields ---- */
 const Input = styled.input`
   padding: 10px 12px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #f9fafc;
-  color: #333;
+  border: 1.5px solid #bcdfff;
+  background: #f5f9ff;
+  color: #1e3a8a;
   font-size: 0.95rem;
+  transition: 0.2s ease;
 
   &:focus {
-    border-color: #ffae00;
+    border-color: #00a2ff;
+    background: #ffffff;
     outline: none;
-    background: #fff;
+    box-shadow: 0 0 4px rgba(0, 162, 255, 0.2);
   }
 `;
 
+/* ---- Select ---- */
 const Select = styled.select`
   padding: 10px 12px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #f9fafc;
-  color: #333;
+  border: 1.5px solid #bcdfff;
+  background: #f5f9ff;
+  color: #1e3a8a;
+  font-size: 0.95rem;
+  transition: 0.2s ease;
 
   &:focus {
-    border-color: #ffae00;
+    border-color: #00a2ff;
+    background: #ffffff;
     outline: none;
-    background: #fff;
+    box-shadow: 0 0 4px rgba(0, 162, 255, 0.2);
   }
 `;
 
+/* ---- Checkbox ---- */
 const CheckboxLabel = styled.label`
   display: flex;
   align-items: center;
   gap: 8px;
   font-weight: 500;
-  color: #333;
+  color: #1e3a8a;
 `;
 
+/* ---- Fieldset ---- */
 const Fieldset = styled.fieldset`
-  border: 1px solid #ddd;
+  border: 1.5px solid #bde0ff;
   border-radius: 8px;
   padding: 16px 20px;
+  background: #f9fbff;
 `;
 
 const Legend = styled.legend`
   font-weight: 700;
-  color: #ff8533;
+  color: #00a2ff;
+  font-size: 1rem;
 `;
 
+/* ---- Submit Button ---- */
 const Button = styled.button`
   align-self: center;
   padding: 12px 24px;
   border-radius: 8px;
-  background: linear-gradient(90deg, #ffae00, #ff8533);
-  color: #081018;
+  background: linear-gradient(90deg, #00a2ff, #4db8ff);
+  color: #ffffff;
   font-weight: 700;
   border: none;
   cursor: pointer;
   margin-top: 8px;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 162, 255, 0.2);
 
   &:hover {
-    background: linear-gradient(90deg, #ffb933, #ffa500);
+    background: linear-gradient(90deg, #0092e5, #33b1ff);
     transform: translateY(-2px);
   }
 `;
 
+/* ---- Message ---- */
 const Message = styled.div`
   text-align: center;
-  color: ${(props) => (props.error ? "#e63946" : "#2a9d8f")};
+  color: ${(props) => (props.error ? "#f44336" : "#00a2ff")};
   font-weight: 600;
   margin-top: 12px;
 `;
+
 
 // ---------- Main Component ----------
 const VerifierApply = () => {

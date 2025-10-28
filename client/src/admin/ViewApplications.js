@@ -3,67 +3,88 @@ import axios from 'axios';
 import styled from 'styled-components';
 
 // 🌟 Styled Components
+// 🌟 Styled Components (Vibrant Sky Blue + White Professional Theme)
 const Wrapper = styled.div`
-  background: #0a1120;
-  color: #e6eef8;
+  background: #f4faff; /* brighter white-blue base */
+  color: #1e3a8a;
   min-height: 100vh;
-  padding: 30px;
+  padding: 40px 50px;
+  font-family: 'Poppins', sans-serif;
 `;
 
 const Title = styled.h2`
   text-align: center;
-  margin-bottom: 20px;
-  font-size: 26px;
-  color: #80b3ff;
+  margin-bottom: 25px;
+  font-size: 28px;
+  color: #008cff; /* vibrant blue heading */
+  font-weight: 700;
+  letter-spacing: 0.4px;
 `;
 
 const List = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 22px;
+  margin-top: 10px;
 `;
 
 const Item = styled.div`
-  background: #101a2b;
-  border: 1px solid rgba(255,255,255,0.05);
-  padding: 18px;
-  border-radius: 10px;
+  background: #ffffff;
+  border: 2px solid #b5e0ff; /* vibrant border */
+  padding: 22px 24px;
+  border-radius: 12px;
   transition: all 0.2s ease;
+  box-shadow: 0 6px 12px rgba(0, 140, 255, 0.08);
+
   &:hover {
+    background: #eaf6ff; /* light hover */
     transform: translateY(-3px);
-    background: #15223a;
+    box-shadow: 0 8px 16px rgba(0, 140, 255, 0.12);
   }
 `;
 
 const Row = styled.div`
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 16px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
 `;
 
 const Label = styled.span`
-  color: #9fb0c8;
+  color: #6c7a91; /* subtle gray-blue */
   font-size: 13px;
 `;
 
 const Value = styled.span`
-  color: #e6eef8;
-  font-weight: 500;
+  color: #0078e7; /* energetic medium blue */
+  font-weight: 600;
 `;
 
 const Button = styled.button`
-  background: #1e40af;
-  color: white;
+  background: #00a2ff;
+  color: #ffffff;
   border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
+  padding: 10px 18px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: 0.3s ease;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.15s ease;
+  box-shadow: 0 3px 6px rgba(0, 162, 255, 0.2);
+
   &:hover {
-    background: #1e3a8a;
+    background: #0088e0;
+    box-shadow: 0 4px 8px rgba(0, 136, 224, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 `;
+
+
 
 const ViewApplications = () => {
   const [apps, setApps] = useState([]);
@@ -218,7 +239,7 @@ const ViewApplications = () => {
             )}
 
             <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-              <Button onClick={() => viewApplication(app._id)} disabled={actionLoading}>View Details</Button>
+              
               {/* Show Approve only when donorDecision is not approved */}
               {app.donorDecision !== 'approved' && (
                 <Button style={{ background: '#16a34a' }} onClick={() => approveApplication(app._id)} disabled={actionLoading}>Approve</Button>

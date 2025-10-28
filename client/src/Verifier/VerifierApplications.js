@@ -4,50 +4,74 @@ import styled from 'styled-components';
 
 // 🌟 Styled Components
 const Container = styled.div`
-  padding: 30px;
-  background: #0a1120;
+  padding: 40px;
+  background: #f9fbff; /* light white-blue background */
   min-height: 100vh;
-  color: #e6eef8;
+  color: #1e3a8a;
+  font-family: 'Poppins', sans-serif;
 `;
 
+/* --- Card --- */
 const Card = styled.div`
-  background: #101a2b;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 2px solid #bde0ff; /* subtle sky blue border */
   border-radius: 12px;
-  padding: 20px;
+  padding: 22px 26px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 12px rgba(0, 162, 255, 0.08);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    background: #f4faff;
+    box-shadow: 0 8px 18px rgba(0, 162, 255, 0.12);
+  }
 `;
 
+/* --- Title --- */
 const Title = styled.h2`
-  color: #4fc3f7;
-  margin-bottom: 6px;
+  color: #00a2ff; /* vibrant sky blue */
+  margin-bottom: 10px;
+  font-size: 22px;
+  font-weight: 700;
 `;
 
+/* --- Label --- */
 const Label = styled.span`
-  color: #9fb0c8;
+  color: #5c6b80; /* soft gray-blue for labels */
   font-weight: 600;
+  font-size: 14px;
 `;
 
+/* --- Value --- */
 const Value = styled.span`
-  color: #ffffff;
-  margin-left: 5px;
+  color: #007bff; /* brighter blue for value text */
+  margin-left: 6px;
+  font-weight: 500;
 `;
 
+/* --- Status Badge --- */
 const Status = styled.div`
   padding: 6px 14px;
   border-radius: 8px;
   display: inline-block;
   font-weight: 700;
   text-transform: capitalize;
-  color: white;
+  font-size: 13px;
+  color: #ffffff;
   background: ${({ status }) =>
-    status === 'approved' ? '#4CAF50'
-    : status === 'funded' ? '#2196F3'
-    : status === 'rejected' ? '#F44336'
-    : status === 'submitted' ? '#FFB300'
-    : '#607D8B'};
+    status === 'approved'
+      ? '#4dc37d' /* green */
+      : status === 'funded'
+      ? '#00a2ff' /* sky blue */
+      : status === 'rejected'
+      ? '#f74c4c' /* red */
+      : status === 'submitted'
+      ? '#ffb74d' /* amber */
+      : '#9fb0c8'};
+  box-shadow: 0 2px 5px rgba(0, 162, 255, 0.15);
 `;
+
 
 const VerifierApplications = () => {
   const [apps, setApps] = useState([]);
