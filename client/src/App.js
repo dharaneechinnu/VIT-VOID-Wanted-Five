@@ -1,24 +1,23 @@
-import logo from './logo.svg';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import './App.css';
+import VerifierLanding from './Verifier/VerifierLanding';
+import VerifierRegister from './Verifier/VerifierRegister';
+import VerifierLogin from './Verifier/VerifierLogin';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        {/* 🌐 Verifier Landing Page */}
+        <Route path="/Verifier" element={<VerifierLanding />} />
+
+        {/* 🔑 Verifier Login */}
+        <Route path="/Verifier/Login" element={<VerifierLogin />} />
+
+        {/* 📝 Verifier Register */}
+        <Route path="/Verifier/Register" element={<VerifierRegister />} />
+      </Routes>
+    </Router>
   );
 }
 
