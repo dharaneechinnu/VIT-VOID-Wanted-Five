@@ -10,14 +10,18 @@ import VerifierViewScholarships from "./Verifier/VerifierViewScholarships";
 import VerifierApply from "./Verifier/VerifierApply";
 
 
+
 // 🎓 Student Components
 import StudentLogin from "./student/StudentLogin";
 import StudentRegister from "./student/StudentRegister";
+import StudentDashboard from "./student/StudentDashboard";
 
 // 🧑‍💼 Admin Components
 import AdminLogin from './admin/AdminLogin';
 import AdminRegister from './admin/AdminRegister'; // ✅ Added Admin Register
 import AdminDashboard from './admin/AdminDashboard';
+
+
 
 function App() {
   return (
@@ -48,10 +52,12 @@ function App() {
         {/* 🧑‍💼 Admin Login */}
         <Route path="/Admin/Login" element={<AdminLogin />} />
 
-  {/* 📝 Admin Register */}
-  <Route path="/Admin/Register" element={<AdminRegister />} />
-  {/* 🏠 Admin Dashboard */}
-  <Route path="/Admin/Dashboard" element={<AdminDashboard />} />
+        {/* 📝 Admin Register */}
+        <Route path="/Admin/Register" element={<AdminRegister />} />
+
+        {/* 📝 Student Dashboard */}
+        <Route path="/Student/Dashboard" element={<StudentDashboard />} />
+
       </Routes>
     </Router>
   );
