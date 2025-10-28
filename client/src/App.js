@@ -5,6 +5,8 @@ import "./App.css";
 import VerifierLanding from "./Verifier/VerifierLanding";
 import VerifierRegister from "./Verifier/VerifierRegister";
 import VerifierLogin from "./Verifier/VerifierLogin";
+import VerifierLoginDash from "./Verifier/VerifierLoginDash";
+
 
 // 🎓 Student Components
 import StudentLogin from "./student/StudentLogin";
@@ -27,6 +29,9 @@ function App() {
         {/* 📝 Verifier Register */}
         <Route path="/Verifier/Register" element={<VerifierRegister />} />
 
+        {/* 📝 Verifier Dashboard */}
+        <Route path="/Verifier/Dashboard" element={<VerifierLoginDash />} />
+        
         {/* 🎓 Student Login */}
         <Route path="/Student/Login" element={<StudentLogin />} />
 
