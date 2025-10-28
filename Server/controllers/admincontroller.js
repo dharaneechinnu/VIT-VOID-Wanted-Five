@@ -6,6 +6,8 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { default: mongoose } = require('mongoose');
 const VerifierApplication = require('../models/verifierapplyform');
+const Transaction = require('../models/transaction');
+const { createPayout } = require('../services/razorpayService');
 
 
 exports.registerDonorRequest = async (req, res) => {
@@ -290,6 +292,81 @@ exports.updateApplicationDocumentandapplication = async (req, res) => {
     res.status(200).json({ message: 'Document verified and application status updated', document: doc, applicationStatus: application.status });
   } catch (error) {
     console.error('Error in updateApplicationDocumentandapplication:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Admin: Make payment to verifier using Razorpay payoutDetails
+exports.makePayoutToVerifier = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    if (!applicationId || !mongoose.Types.ObjectId.isValid(applicationId)) {
+      return res.status(400).json({ message: 'Valid applicationId required in URL' });
+    }
+    const application = await VerifierApplication.findById(applicationId);
+    if (!application) return res.status(404).json({ message: 'Application not found' });
+    const payout = application.payoutDetails;
+    if (!payout || !payout.beneficiaryId) {
+      return res.status(400).json({ message: 'No payoutDetails/beneficiaryId found for this application' });
+    }
+    // Use scholarshipAmount from scholarship model
+    const scholarship = await Scholarship.findById(application.scholarshipId);
+    if (!scholarship) return res.status(404).json({ message: 'Scholarship not found' });
+    const amount = scholarship.scholarshipAmount * 100; // INR to paise
+    // Create payout
+    let payoutResp;
+    try {
+      payoutResp = await createPayout({
+        beneficiaryId: payout.beneficiaryId,
+        amount,
+        currency: 'INR',
+        mode: 'IMPS',
+        purpose: 'scholarship',
+        referenceId: `app_${application._id}`,
+        narration: `Scholarship payout for ${application.studentname}`,
+      });
+    } catch (err) {
+      // Log failed transaction
+      await Transaction.create({
+        applicationId: application._id,
+        beneficiaryId: payout.beneficiaryId,
+        amount,
+        currency: 'INR',
+        status: 'failed',
+        failureReason: err.message,
+        payoutDetails: payout,
+        rawResponse: err,
+      });
+      return res.status(500).json({ message: 'Razorpay payout failed', error: err.message });
+    }
+    // Log transaction
+    const txn = await Transaction.create({
+      applicationId: application._id,
+      beneficiaryId: payout.beneficiaryId,
+      amount,
+      currency: 'INR',
+      status: payoutResp.status || 'processing',
+      transferId: payoutResp.id,
+      initiatedAt: new Date(payoutResp.created_at * 1000),
+      payoutDetails: payout,
+      rawResponse: payoutResp,
+    });
+    // Optionally update application status/history
+    application.status = 'funded';
+    application.payoutHistory = application.payoutHistory || [];
+    application.payoutHistory.push({
+      transferId: payoutResp.id,
+      amount,
+      currency: 'INR',
+      status: payoutResp.status,
+      initiatedAt: new Date(payoutResp.created_at * 1000),
+      completedAt: payoutResp.funded_at ? new Date(payoutResp.funded_at * 1000) : undefined,
+      failureReason: payoutResp.failure_reason,
+    });
+    await application.save();
+    res.status(200).json({ message: 'Payout initiated', transaction: txn, payoutResponse: payoutResp });
+  } catch (error) {
+    console.error('Error in makePayoutToVerifier:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
