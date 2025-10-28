@@ -1,23 +1,23 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import './App.css';
-import VerifierLanding from './Verifier/VerifierLanding';
-import VerifierRegister from './Verifier/VerifierRegister';
-import VerifierLogin from './Verifier/VerifierLogin';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import AdminLandingPage from "./admin/AdminLandingPage";
+import AdminLogin from "./admin/AdminLogin";
+import AdminRegister from "./admin/AdminRegister";
 
 function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
-        {/* 🌐 Verifier Landing Page */}
-        <Route path="/Verifier" element={<VerifierLanding />} />
+        {/* Landing Page (blue background with FastScholar title + buttons) */}
+        <Route path="/" element={<AdminLandingPage />} />
 
-        {/* 🔑 Verifier Login */}
-        <Route path="/Verifier/Login" element={<VerifierLogin />} />
+        {/* Admin Login Page */}
+        <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* 📝 Verifier Register */}
-        <Route path="/Verifier/Register" element={<VerifierRegister />} />
+        {/* Admin Registration Page */}
+        <Route path="/admin/register" element={<AdminRegister />} />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
 

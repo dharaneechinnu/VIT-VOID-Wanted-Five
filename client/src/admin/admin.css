@@ -1,0 +1,116 @@
+/* ======== LANDING PAGE ======== */
+.landing-container {
+  height: 100vh;
+  background: linear-gradient(135deg, #001f4d, #003d99);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.nav-buttons {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+}
+
+.nav-buttons button {
+  margin-left: 10px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.login-btn {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.register-btn {
+  background-color: #00b3ff;
+  color: white;
+}
+
+.login-btn:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.register-btn:hover {
+  background-color: #0099e6;
+}
+
+.title {
+  font-size: 4rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #6cd4ff;
+}
+
+.tagline {
+  font-style: italic;
+  font-size: 1.2rem;
+  margin-top: 10px;
+  color: #d6eaff;
+  text-align: center;
+}
+
+/* ======== FORM STYLING ======== */
+.form-background {
+  background: linear-gradient(135deg, #001f4d, #003d99);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-box {
+  width: 400px;
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.form-box h2 {
+  text-align: center;
+  color: #003366;
+  margin-bottom: 20px;
+}
+
+.form-box label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.form-box input,
+.form-box select,
+.form-box textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.submit-btn {
+  width: 100%;
+  background-color: #0077ff;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.submit-btn:hover {
+  background-color: #005fcc;
+}
