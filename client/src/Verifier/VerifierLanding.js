@@ -113,6 +113,45 @@ const VerifierLanding = () => {
             z-index: 0;
           }
 
+          /* ✨ Top Navigation Buttons */
+          .top-right-buttons {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            display: flex;
+            gap: 15px;
+            z-index: 2;
+          }
+
+          .verifier-btn {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+          }
+
+          .verifier-btn.login {
+            background-color: #ffffff;
+            color: #007bff;
+          }
+
+          .verifier-btn.login:hover {
+            background-color: #e9e9e9;
+          }
+
+          .verifier-btn.register {
+            background-color: #00cfff;
+            color: white;
+          }
+
+          .verifier-btn.register:hover {
+            background-color: #00a6d9;
+          }
+
+          /* ✨ Centered Content */
           .landing-content {
             position: relative;
             z-index: 1;
@@ -126,10 +165,10 @@ const VerifierLanding = () => {
           }
 
           .landing-title {
-            font-size: 8rem; /* ✨ Massive Text */
+            font-size: 8rem;
             font-weight: 900;
             letter-spacing: 8px;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             background: linear-gradient(90deg, #00cfff, #b3ecff, #ffffff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -152,43 +191,8 @@ const VerifierLanding = () => {
           .landing-subtext {
             font-size: 1.4rem;
             color: #d9f6ff;
-            margin-bottom: 50px;
             font-weight: 400;
             letter-spacing: 1px;
-          }
-
-          .verifier-btns {
-            display: flex;
-            gap: 25px;
-            justify-content: center;
-          }
-
-          .verifier-btn {
-            padding: 14px 36px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-          }
-
-          .verifier-btn.login {
-            background-color: #ffffff;
-            color: #007bff;
-          }
-
-          .verifier-btn.login:hover {
-            background-color: #e9e9e9;
-          }
-
-          .verifier-btn.register {
-            background-color: #00cfff;
-            color: white;
-          }
-
-          .verifier-btn.register:hover {
-            background-color: #00a6d9;
           }
         `}
       </style>
@@ -196,26 +200,28 @@ const VerifierLanding = () => {
       <div className="verifier-landing">
         <canvas id="network-bg"></canvas>
 
+        {/* 🔝 Top Right Buttons */}
+        <div className="top-right-buttons">
+          <button
+            className="verifier-btn login"
+            onClick={() => navigate("/Verifier/Login")}
+          >
+            Login
+          </button>
+          <button
+            className="verifier-btn register"
+            onClick={() => navigate("/Verifier/Register")}
+          >
+            Register
+          </button>
+        </div>
+
+        {/* 🌟 Centered Hero Text */}
         <div className="landing-content">
           <h1 className="landing-title">FAST SCHOLAR</h1>
           <p className="landing-subtext">
             Empowering institutions with smart, secure, and verified records.
           </p>
-
-          <div className="verifier-btns">
-            <button
-              className="verifier-btn login"
-              onClick={() => navigate("/Verifier/Login")}
-            >
-              Login
-            </button>
-            <button
-              className="verifier-btn register"
-              onClick={() => navigate("/Verifier/Register")}
-            >
-              Register
-            </button>
-          </div>
         </div>
       </div>
     </>
