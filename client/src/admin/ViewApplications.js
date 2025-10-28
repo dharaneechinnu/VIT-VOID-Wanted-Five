@@ -3,67 +3,75 @@ import axios from 'axios';
 import styled from 'styled-components';
 
 // 🌟 Styled Components
-const Wrapper = styled.div`
-  background: #0a1120;
-  color: #e6eef8;
+const Container = styled.div`
+  padding: 40px;
+  background: #f9fbff; /* light white-blue background */
   min-height: 100vh;
-  padding: 30px;
+  color: #1e3a8a;
+  font-family: 'Poppins', sans-serif;
 `;
 
-const Title = styled.h2`
-  text-align: center;
+/* --- Card --- */
+const Card = styled.div`
+  background: #ffffff;
+  border: 2px solid #bde0ff; /* subtle sky blue border */
+  border-radius: 12px;
+  padding: 22px 26px;
   margin-bottom: 20px;
-  font-size: 26px;
-  color: #80b3ff;
-`;
-
-const List = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
-
-const Item = styled.div`
-  background: #101a2b;
-  border: 1px solid rgba(255,255,255,0.05);
-  padding: 18px;
-  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(0, 162, 255, 0.08);
   transition: all 0.2s ease;
+
   &:hover {
     transform: translateY(-3px);
-    background: #15223a;
+    background: #f4faff;
+    box-shadow: 0 8px 18px rgba(0, 162, 255, 0.12);
   }
 `;
 
-const Row = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
+/* --- Title --- */
+const Title = styled.h2`
+  color: #00a2ff; /* vibrant sky blue */
+  margin-bottom: 10px;
+  font-size: 22px;
+  font-weight: 700;
 `;
 
+/* --- Label --- */
 const Label = styled.span`
-  color: #9fb0c8;
-  font-size: 13px;
+  color: #5c6b80; /* soft gray-blue for labels */
+  font-weight: 600;
+  font-size: 14px;
 `;
 
+/* --- Value --- */
 const Value = styled.span`
-  color: #e6eef8;
+  color: #007bff; /* brighter blue for value text */
+  margin-left: 6px;
   font-weight: 500;
 `;
 
-const Button = styled.button`
-  background: #1e40af;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.3s ease;
-  &:hover {
-    background: #1e3a8a;
-  }
+/* --- Status Badge --- */
+const Status = styled.div`
+  padding: 6px 14px;
+  border-radius: 8px;
+  display: inline-block;
+  font-weight: 700;
+  text-transform: capitalize;
+  font-size: 13px;
+  color: #ffffff;
+  background: ${({ status }) =>
+    status === 'approved'
+      ? '#4dc37d' /* green */
+      : status === 'funded'
+      ? '#00a2ff' /* sky blue */
+      : status === 'rejected'
+      ? '#f74c4c' /* red */
+      : status === 'submitted'
+      ? '#ffb74d' /* amber */
+      : '#9fb0c8'};
+  box-shadow: 0 2px 5px rgba(0, 162, 255, 0.15);
 `;
+
 
 const ViewApplications = () => {
   const [apps, setApps] = useState([]);

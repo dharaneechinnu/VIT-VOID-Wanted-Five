@@ -18,6 +18,7 @@ import StudentRegister from "./student/StudentRegister";
 import AdminLogin from './admin/AdminLogin';
 import AdminRegister from './admin/AdminRegister'; // ✅ Added Admin Register
 import AdminDashboard from './admin/AdminDashboard';
+
 // Superadmin
 import SuperAdminDashboard from './superadmin/SuperAdminDashboard';
 

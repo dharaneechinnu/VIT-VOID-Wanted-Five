@@ -5,144 +5,259 @@ import ViewApplications from './ViewApplications';
 import CreateScholar from './CreateScholar';
 import { useNavigate } from 'react-router-dom';
 
-const drawerWidth = 220;
+const drawerWidth = 250;
 
+/* ---- WRAPPER ---- */
 const DashboardWrapper = styled.div`
   display: flex;
+  flex-direction: column; /* make it vertical layout */
   min-height: 100vh;
-  background: #181818;
+  background: #f9fbff;
   font-family: 'Poppins', sans-serif;
 `;
 
-const Sidebar = styled.aside`
-  width: ${drawerWidth}px;
-  background: #0b1220;
-  border-right: 1px solid rgba(255,255,255,0.03);
-  padding: 24px;
-  box-sizing: border-box;
-`;
-
-const Logo = styled.div`
-  font-size: 20px;
-  font-weight: 700;
-  color: #ffae00;
-  margin-bottom: 24px;
-`;
-
-const Nav = styled.nav`
+/* ---- TOP BAR ---- */
+const TopBar = styled.div`
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 2px solid #dceeff;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 16px 28px;
+  box-shadow: 0 2px 6px rgba(0, 162, 255, 0.08);
 `;
 
-const NavButton = styled.button`
-  background: ${props => (props.active ? 'linear-gradient(90deg,#ffae00,#ff8533)' : 'transparent')};
-  color: ${props => (props.active ? '#081018' : '#e6eef8')};
-  border: ${props => (props.active ? 'none' : '1px solid rgba(255,255,255,0.04)')};
-  padding: 12px 16px;
-  border-radius: 8px;
-  text-align: left;
-  font-weight: 600;
+/* ---- LOGOUT BUTTON ---- */
+const LogoutButton = styled.button`
+  background: #00a2ff;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.18s ease;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 162, 255, 0.15);
 
   &:hover {
-    transform: translateY(-1px);
+    background: #0092e5;
+    box-shadow: 0 3px 6px rgba(0, 136, 224, 0.25);
   }
 `;
 
-const Content = styled.main`
+/* ---- MAIN BODY (SIDEBAR + CONTENT) ---- */
+const BodyContainer = styled.div`
+  display: flex;
   flex: 1;
-  padding: 28px;
-  box-sizing: border-box;
+  width: 100%;
 `;
 
+/* ---- SIDEBAR ---- */
+const Sidebar = styled.aside`
+  width: ${drawerWidth}px;
+  background: #ffffff;
+  border-right: 2px solid #dceeff;
+  padding: 24px 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 18px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+`;
+
+/* ---- LOGO ---- */
+const Logo = styled.div`
+  font-size: 22px;
+  font-weight: 700;
+  color: #00a2ff;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  width: 100%;
+  text-align: left;
+`;
+
+/* ---- NAVIGATION ---- */
+const Nav = styled.nav`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+`;
+
+const NavButton = styled.button`
+  background: ${(props) => (props.active ? "#00a2ff" : "#ffffff")};
+  color: ${(props) => (props.active ? "#ffffff" : "#00a2ff")};
+  border: 2px solid #00a2ff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  width: 100%;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: ${(props) => (props.active ? "#0092e5" : "#eaf5ff")};
+  }
+`;
+
+/* ---- MAIN CONTENT ---- */
+const Content = styled.main`
+  flex: 1;
+  background: #ffffff;
+  padding: 40px;
+  box-sizing: border-box;
+  border-left: 2px solid #eaf3ff;
+  display: flex;
+  flex-direction: column;
+`;
+
+/* ---- HEADER ---- */
 const Header = styled.div`
-  display:flex;
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #eaf3ff;
+  padding-bottom: 10px;
 `;
 
 const Title = styled.h1`
-  font-size: 22px;
-  color: #fff;
+  font-size: 24px;
+  color: #00a2ff;
   margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.4px;
 `;
 
-  const AdminDashboard = () => {
-    const [active, setActive] = useState('view');
-    const navigate = useNavigate();
 
-    // read admin info from localStorage
-    let storedAdmin = null;
+
+const AdminDashboard = () => {
+  const [active, setActive] = useState('view');
+  const navigate = useNavigate();
+
+  // read admin info from localStorage
+  let storedAdmin = null;
+try {
+  const raw = localStorage.getItem('adminAuth');
+  if (raw && raw !== "undefined" && raw !== "null") {
+    const parsed = JSON.parse(raw);
+    storedAdmin = parsed.admin || parsed;
+  }
+} catch (e) {
+  console.warn('Invalid adminAuth format:', e);
+  storedAdmin = null;
+}
+
+
+  const handleLogout = () => {
     try {
-      const raw = localStorage.getItem('adminAuth');
-      if (raw) storedAdmin = JSON.parse(raw).admin || JSON.parse(raw);
+      localStorage.clear();
+      sessionStorage.clear();
     } catch (e) {
-      console.warn('Could not parse adminAuth from localStorage', e);
+      console.warn('Error clearing localStorage during logout', e);
     }
-
-    const handleLogout = () => {
-      try {
-        // clear all local/session storage on logout
-        localStorage.clear();
-        try { sessionStorage.clear(); } catch (err) {}
-      } catch (e) {
-        console.warn('Error clearing localStorage during logout', e);
-        try { localStorage.removeItem('adminAuth'); } catch (err) {}
-      }
-      // redirect to admin login
-      navigate('/admin/login');
-    };
-
-    const renderContent = () => {
-      switch (active) {
-        case 'view':
-          return <ViewApplications />;
-        case 'create':
-          return <CreateScholar />;
-        case 'payment':
-          return <MakePayment onBack={() => setActive('view')} />;
-        default:
-          return <ViewApplications />;
-      }
-    };
-
-    return (
-      <DashboardWrapper>
-        <Sidebar>
-          <Logo>Admin Panel</Logo>
-          <div style={{marginBottom:12, color:'#9fb0c8', fontSize:13}}>
-            {storedAdmin ? (
-              <div>
-                <div style={{fontWeight:700, color:'#fff'}}>{storedAdmin.orgName || storedAdmin.name || 'Admin'}</div>
-                <div style={{fontSize:12}}>{storedAdmin.contactEmail || storedAdmin.email || ''}</div>
-              </div>
-            ) : (
-              <div style={{fontSize:12}}>Not signed in</div>
-            )}
-          </div>
-          <Nav>
-            <NavButton active={active === 'view'} onClick={() => setActive('view')}>View Applications</NavButton>
-            <NavButton active={active === 'create'} onClick={() => setActive('create')}>Create Scholar</NavButton>
-            <NavButton active={active === 'payment'} onClick={() => setActive('payment')}>Make Payment</NavButton>
-          </Nav>
-
-          <div style={{marginTop:24}}>
-            <button onClick={handleLogout} style={{padding:'10px 12px', borderRadius:8, background:'#ff4d4f', color:'#fff', border:'none', cursor:'pointer'}}>Logout</button>
-          </div>
-        </Sidebar>
-
-        <Content>
-          <Header>
-            <Title>{active === 'view' ? 'View Applications' : active === 'create' ? 'Create Scholarship' : 'Make Payment'}</Title>
-          </Header>
-
-          {renderContent()}
-        </Content>
-      </DashboardWrapper>
-    );
+    navigate('/admin/login');
   };
 
-  export default AdminDashboard;
+  const renderContent = () => {
+    switch (active) {
+      case 'view':
+        return <ViewApplications />;
+      case 'create':
+        return <CreateScholar />;
+      case 'payment':
+        return <MakePayment onBack={() => setActive('view')} />;
+      default:
+        return <ViewApplications />;
+    }
+  };
+
+  return (
+  <DashboardWrapper>
+    {/* ✅ Top Bar with Logout Button */}
+    <TopBar>
+      <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
+    </TopBar>
+
+    {/* ✅ Body with Sidebar and Content */}
+    <BodyContainer>
+      <Sidebar>
+        <Logo>Admin Panel</Logo>
+
+        {/* Email box block */}
+        <div
+          style={{
+            background: '#f4faff',
+            border: '2px solid #bde0ff',
+            borderRadius: '10px',
+            padding: '12px 14px',
+            marginBottom: '24px',
+            textAlign: 'left',
+            boxShadow: '0 2px 6px rgba(0, 162, 255, 0.1)',
+          }}
+        >
+          {storedAdmin ? (
+            <div>
+              <div
+                style={{
+                  fontWeight: 700,
+                  color: '#00a2ff',
+                  fontSize: '14px',
+                  marginBottom: '4px',
+                }}
+              >
+                {storedAdmin.orgName || storedAdmin.name || 'Admin'}
+              </div>
+              <div
+                style={{
+                  fontSize: '13px',
+                  color: '#1e40af',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {storedAdmin.contactEmail || storedAdmin.email || 'No Email Available'}
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontSize: '13px', color: '#64748b' }}>Not signed in</div>
+          )}
+        </div>
+
+        <Nav>
+          <NavButton active={active === 'view'} onClick={() => setActive('view')}>
+            View Applications
+          </NavButton>
+          <NavButton active={active === 'create'} onClick={() => setActive('create')}>
+            Create Scholar
+          </NavButton>
+          <NavButton active={active === 'payment'} onClick={() => setActive('payment')}>
+            Make Payment
+          </NavButton>
+        </Nav>
+      </Sidebar>
+
+      <Content>
+        <Header>
+          <Title>
+            {active === 'view'
+              ? 'View Applications'
+              : active === 'create'
+              ? 'Create Scholarship'
+              : 'Make Payment'}
+          </Title>
+        </Header>
+
+        {renderContent()}
+      </Content>
+    </BodyContainer>
+  </DashboardWrapper>
+  );
+};
+
+export default AdminDashboard;
