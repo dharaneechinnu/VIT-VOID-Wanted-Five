@@ -1,24 +1,23 @@
-import logo from './logo.svg';
 import './App.css';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import AdminLandingPage from "./admin/AdminLandingPage";
+import AdminLogin from "./admin/AdminLogin";
+import AdminRegister from "./admin/AdminRegister";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        {/* Landing Page (blue background with FastScholar title + buttons) */}
+        <Route path="/" element={<AdminLandingPage />} />
+
+        {/* Admin Login Page */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        {/* Admin Registration Page */}
+        <Route path="/admin/register" element={<AdminRegister />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
