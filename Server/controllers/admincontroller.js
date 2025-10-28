@@ -1,5 +1,6 @@
 // controllers/adminController.js
 const Donor = require('../models/donor');
+const Scholarship = require('../models/scholarship');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
@@ -123,4 +124,80 @@ try {
 }
 };
 
+exports.createScholarship = async (req, res) => {
+  try {
+    console.log('DEBUG: createScholarship called with body:', req.body);
+
+    const {
+      scholarshipName,
+      providerName,
+      description,
+      eligibilityCriteria,
+      applicationDeadline,
+      scholarshipAmount,
+      isActive,
+      createdBy // optional donor id (if authentication not wired)
+    } = req.body;
+
+    // ✅ Basic validation
+    if (!scholarshipName || !providerName || !description || !applicationDeadline || !scholarshipAmount) {
+      return res.status(400).json({
+        message:
+          'Missing required fields. Required: scholarshipName, providerName, description, applicationDeadline, scholarshipAmount',
+      });
+    }
+
+    // ✅ Get donor ID (from auth or body)
+    const donorId = req.user?.id || createdBy;
+    if (!donorId) {
+      return res.status(400).json({
+        message: 'Donor id (createdBy) is required. Provide it in request body or via authentication.',
+      });
+    }
+
+    // ✅ Validate donor existence
+    const donor = await Donor.findById(donorId);
+    if (!donor) {
+      return res.status(404).json({ message: 'Donor not found' });
+    }
+
+    // ✅ Prepare scholarship data
+    const scholarshipData = {
+      scholarshipName,
+      providerName,
+      description,
+      eligibilityCriteria: {
+        tenthMarks: eligibilityCriteria?.tenthMarks || null,
+        twelfthMarks: eligibilityCriteria?.twelfthMarks || null,
+        collegeCGPA: eligibilityCriteria?.collegeCGPA || null,
+        maxParentIncome: eligibilityCriteria?.maxParentIncome || null,
+        womenPreference: eligibilityCriteria?.womenPreference || false,
+        academicPerformance: eligibilityCriteria?.academicPerformance || 'Any',
+        disabilityAllowed: eligibilityCriteria?.disabilityAllowed || ['None'],
+        extracurricular: eligibilityCriteria?.extracurricular || [],
+        firstGenGraduate: eligibilityCriteria?.firstGenGraduate || false,
+        specialCategory: eligibilityCriteria?.specialCategory || [],
+      },
+      applicationDeadline: new Date(applicationDeadline),
+      scholarshipAmount,
+      createdBy: donor._id,
+      isActive: typeof isActive === 'boolean' ? isActive : true,
+    };
+
+    // ✅ Save to DB
+    const scholarship = new Scholarship(scholarshipData);
+    await scholarship.save();
+
+    console.log('DEBUG: Scholarship created with ID:', scholarship._id);
+
+    // ✅ Send response
+    res.status(201).json({
+      message: 'Scholarship created successfully 🎓',
+      scholarship,
+    });
+  } catch (error) {
+    console.error('❌ Error in createScholarship:', error.message);
+    res.status(500).json({ message: 'Error creating scholarship', error: error.message });
+  }
+};
 
