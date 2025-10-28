@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 
 // ✅ Register Verifier Request (Institution Registration)
 exports.registerVerifierRequest = async (req, res) => {
@@ -194,6 +195,8 @@ exports.applyForScholarship = async (req, res) => {
 
     // Prepare application payload (no documents from this route)
     const applicationPayload = {
+      // Application number will be generated server-side (unique, starts with FS_)
+      ApplicationNo: undefined,
       verifierId: data.verifierId,
       scholarshipId: data.scholarshipId,
       // adminId will be resolved server-side from scholarship.createdBy
@@ -223,7 +226,7 @@ exports.applyForScholarship = async (req, res) => {
       beneficiaryId: data.payoutDetails.beneficiaryId,
       accountHolderName: data.payoutDetails.accountHolderName,
       accountNumber: data.payoutDetails.accountNumber,
-      maskedAccountNumber: "sjkdnfkjsdn",
+      maskedAccountNumber: "MASK_TEST_NUMBER",
       ifsc: data.payoutDetails.ifsc,
       bankName: data.payoutDetails.bankName,
       email: data.payoutDetails.email,
@@ -231,12 +234,64 @@ exports.applyForScholarship = async (req, res) => {
       beneficiaryVerified: data.payoutDetails.beneficiaryVerified,
     };
 
+    // Generate a unique ApplicationNo starting with FS_
+    let applicationNo;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const ts = new Date().toISOString().replace(/[-:.TZ]/g, '');
+      const rand = Math.floor(1000 + Math.random() * 9000);
+      applicationNo = `FS_${ts}_${rand}`;
+      const exists = await VerifierApplication.findOne({ ApplicationNo: applicationNo });
+      if (!exists) break;
+      applicationNo = undefined;
+    }
+    if (!applicationNo) return res.status(500).json({ message: 'Could not generate unique ApplicationNo, try again' });
+    applicationPayload.ApplicationNo = applicationNo;
+
     const app = new VerifierApplication(applicationPayload);
     await app.save();
+
+    // Send application received email to student (best-effort)
+    (async function sendApplicationEmail() {
+      try {
+        const GMAIL_USER ="dharaneedharanchinnusamy@gmail.com"|| process.env.GMAIL_EMAIL;
+        const GMAIL_PASS = process.env.PASS || process.env.GMAIL_PASSWORD || process.env.PASS;
+        if (!GMAIL_USER || !GMAIL_PASS) {
+          console.warn('GMAIL credentials not configured; skipping application email');
+          return;
+        }
+
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: GMAIL_USER, pass: GMAIL_PASS },
+        });
+
+        const subject = `Application Received — Application No ${applicationNo}`;
+        const text = `Hello ${applicationPayload.studentname},\n\n` +
+          `We have received your scholarship application successfully.\n\n` +
+          `Application Number: ${applicationNo}\n` +
+          `Student Name: ${applicationPayload.studentname}\n\n` +
+          `You can use this application number to track the status of your application.\n\n` +
+          `If you have any questions, reply to this email.\n\n` +
+          `Best regards,\nThe Fast Scholar Team`;
+
+        const mailOptions = {
+          from: GMAIL_USER,
+          to: applicationPayload.studentemail,
+          subject,
+          text,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.debug('Application email sent to', applicationPayload.studentemail);
+      } catch (emailErr) {
+        console.error('Failed to send application email:', emailErr);
+      }
+    })();
 
     res.status(201).json({ 
       message: 'Application submitted successfully', 
       application: app,
+      applicationNo,
       note: 'Use /verifier/uploaddocuments to upload files for this application'
     });
   } catch (error) {

@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import MakePayment from "./MakePayment";
-import ViewApplications from './ViewApplications';
-import CreateScholar from './CreateScholar';
-import { useNavigate } from 'react-router-dom';
+import ViewApplications from "./ViewApplications";
+import CreateScholar from "./CreateScholar";
+import ViewTransactions from "./ViewTransactions";
+import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 250;
 
 /* ---- WRAPPER ---- */
 const DashboardWrapper = styled.div`
   display: flex;
-  flex-direction: column; /* make it vertical layout */
+  flex-direction: column;
   min-height: 100vh;
   background: #f9fbff;
   font-family: 'Poppins', sans-serif;
@@ -47,7 +48,7 @@ const LogoutButton = styled.button`
   }
 `;
 
-/* ---- MAIN BODY (SIDEBAR + CONTENT) ---- */
+/* ---- MAIN BODY ---- */
 const BodyContainer = styled.div`
   display: flex;
   flex: 1;
@@ -64,7 +65,6 @@ const Sidebar = styled.aside`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: flex-start;
   gap: 18px;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
 `;
@@ -135,128 +135,153 @@ const Title = styled.h1`
   letter-spacing: 0.4px;
 `;
 
-
-
 const AdminDashboard = () => {
-  const [active, setActive] = useState('view');
+  const [active, setActive] = useState("view");
   const navigate = useNavigate();
 
-  // read admin info from localStorage
+  // ✅ Read admin info safely
   let storedAdmin = null;
-try {
-  const raw = localStorage.getItem('adminAuth');
-  if (raw && raw !== "undefined" && raw !== "null") {
-    const parsed = JSON.parse(raw);
-    storedAdmin = parsed.admin || parsed;
+  try {
+    const raw = localStorage.getItem("adminAuth");
+    if (raw && raw !== "undefined" && raw !== "null") {
+      const parsed = JSON.parse(raw);
+      storedAdmin = parsed.admin || parsed;
+    }
+  } catch (e) {
+    console.warn("Invalid adminAuth format:", e);
+    storedAdmin = null;
   }
-} catch (e) {
-  console.warn('Invalid adminAuth format:', e);
-  storedAdmin = null;
-}
 
-
+  // ✅ Logout function
   const handleLogout = () => {
     try {
       localStorage.clear();
       sessionStorage.clear();
     } catch (e) {
-      console.warn('Error clearing localStorage during logout', e);
+      console.warn("Error clearing localStorage during logout", e);
     }
-    navigate('/admin/login');
+    navigate("/admin/login");
   };
 
+  // ✅ Render content dynamically
   const renderContent = () => {
     switch (active) {
-      case 'view':
+      case "view":
         return <ViewApplications />;
-      case 'create':
+      case "create":
         return <CreateScholar />;
-      case 'payment':
-        return <MakePayment onBack={() => setActive('view')} />;
+      case "payment":
+        return <MakePayment onBack={() => setActive("view")} />;
+      case "transactions":
+        return <ViewTransactions />;
       default:
         return <ViewApplications />;
     }
   };
 
   return (
-  <DashboardWrapper>
-    {/* ✅ Top Bar with Logout Button */}
-    <TopBar>
-      <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
-    </TopBar>
+    <DashboardWrapper>
+      {/* ✅ Top Bar */}
+      <TopBar>
+        <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
+      </TopBar>
 
-    {/* ✅ Body with Sidebar and Content */}
-    <BodyContainer>
-      <Sidebar>
-        <Logo>Admin Panel</Logo>
+      {/* ✅ Main Body */}
+      <BodyContainer>
+        <Sidebar>
+          <Logo>Admin Panel</Logo>
 
-        {/* Email box block */}
-        <div
-          style={{
-            background: '#f4faff',
-            border: '2px solid #bde0ff',
-            borderRadius: '10px',
-            padding: '12px 14px',
-            marginBottom: '24px',
-            textAlign: 'left',
-            boxShadow: '0 2px 6px rgba(0, 162, 255, 0.1)',
-          }}
-        >
-          {storedAdmin ? (
-            <div>
-              <div
-                style={{
-                  fontWeight: 700,
-                  color: '#00a2ff',
-                  fontSize: '14px',
-                  marginBottom: '4px',
-                }}
-              >
-                {storedAdmin.orgName || storedAdmin.name || 'Admin'}
+          {/* ✅ Email Box */}
+          <div
+            style={{
+              background: "#f4faff",
+              border: "2px solid #bde0ff",
+              borderRadius: "10px",
+              padding: "12px 14px",
+              marginBottom: "24px",
+              textAlign: "left",
+              boxShadow: "0 2px 6px rgba(0, 162, 255, 0.1)",
+              width: "100%",
+            }}
+          >
+            {storedAdmin ? (
+              <div>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    color: "#00a2ff",
+                    fontSize: "14px",
+                    marginBottom: "4px",
+                  }}
+                >
+                  {storedAdmin.orgName || storedAdmin.name || "Admin"}
+                </div>
+                <div
+                  style={{
+                    fontSize: "13px",
+                    color: "#1e40af",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {storedAdmin.contactEmail ||
+                    storedAdmin.email ||
+                    "No Email Available"}
+                </div>
               </div>
-              <div
-                style={{
-                  fontSize: '13px',
-                  color: '#1e40af',
-                  wordBreak: 'break-word',
-                }}
-              >
-                {storedAdmin.contactEmail || storedAdmin.email || 'No Email Available'}
+            ) : (
+              <div style={{ fontSize: "13px", color: "#64748b" }}>
+                Not signed in
               </div>
-            </div>
-          ) : (
-            <div style={{ fontSize: '13px', color: '#64748b' }}>Not signed in</div>
-          )}
-        </div>
+            )}
+          </div>
 
-        <Nav>
-          <NavButton active={active === 'view'} onClick={() => setActive('view')}>
-            View Applications
-          </NavButton>
-          <NavButton active={active === 'create'} onClick={() => setActive('create')}>
-            Create Scholar
-          </NavButton>
-          <NavButton active={active === 'payment'} onClick={() => setActive('payment')}>
-            Make Payment
-          </NavButton>
-        </Nav>
-      </Sidebar>
+          {/* ✅ Navigation */}
+          <Nav>
+            <NavButton
+              active={active === "view"}
+              onClick={() => setActive("view")}
+            >
+              View Applications
+            </NavButton>
+            <NavButton
+              active={active === "create"}
+              onClick={() => setActive("create")}
+            >
+              Create Scholar
+            </NavButton>
+            <NavButton
+              active={active === "payment"}
+              onClick={() => setActive("payment")}
+            >
+              Make Payment
+            </NavButton>
+            <NavButton
+              active={active === "transactions"}
+              onClick={() => setActive("transactions")}
+            >
+              View Transactions
+            </NavButton>
+          </Nav>
+        </Sidebar>
 
-      <Content>
-        <Header>
-          <Title>
-            {active === 'view'
-              ? 'View Applications'
-              : active === 'create'
-              ? 'Create Scholarship'
-              : 'Make Payment'}
-          </Title>
-        </Header>
+        {/* ✅ Main Content */}
+        <Content>
+          <Header>
+            <Title>
+              {active === "view"
+                ? "View Applications"
+                : active === "create"
+                ? "Create Scholarship"
+                : active === "payment"
+                ? "Make Payment"
+                : "View Transactions"}
+            </Title>
+          </Header>
 
-        {renderContent()}
-      </Content>
-    </BodyContainer>
-  </DashboardWrapper>
+          {renderContent()}
+        </Content>
+      </BodyContainer>
+    </DashboardWrapper>
   );
 };
 

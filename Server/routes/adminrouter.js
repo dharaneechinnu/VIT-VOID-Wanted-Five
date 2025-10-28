@@ -43,6 +43,14 @@ router.post('/applications/:applicationId/create-order', admincontroller.createO
 // POST /admin/applications/:applicationId/verify-payment
 router.post('/applications/:applicationId/verify-payment', admincontroller.verifyPaymentForApplication);
 
+// Search transactions (admin) - flexible filters
+// GET /admin/transactions/search?q=&adminId=&applicationId=&status=&page=&limit=
+router.get('/transactions/search', admincontroller.searchTransactions);
+
+// GET transactions for a specific admin (donor)
+// Example: GET /admin/transactions/admin/:adminId?q=transfer_123&page=1&limit=25
+router.get('/transactions/admin/:adminId', admincontroller.getTransactionsByAdminId);
+
 // Create beneficiary (contact + fund_account) for application
 // POST /admin/applications/:applicationId/create-beneficiary
 router.post('/applications/:applicationId/create-beneficiary', admincontroller.createBeneficiaryForApplication);

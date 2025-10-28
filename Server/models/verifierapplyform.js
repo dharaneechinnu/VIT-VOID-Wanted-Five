@@ -8,6 +8,11 @@ const verifierApplicationSchema = new mongoose.Schema(
       ref: "verifier",
       required: true,
     },
+    ApplicationNo:{
+      type: String,
+      required: true,
+      unique: true,
+    },
      donorid: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Donor",

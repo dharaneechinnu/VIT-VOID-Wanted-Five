@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 
 const StudentLogin = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -20,6 +21,14 @@ const StudentLogin = () => {
       if (status === 200) {
         setMessage("✅ Login successful!");
         console.log("Student Logged In:", data);
+        // store token and redirect to student dashboard
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+        }
+        // slight delay so user sees message, then navigate
+        setTimeout(() => {
+          navigate('/Student/Dashboard');
+        }, 450);
       } else setMessage("❌ Invalid email or password.");
     } catch (err) {
       console.error(err);
@@ -28,6 +37,8 @@ const StudentLogin = () => {
       setLoading(false);
     }
   };
+
+  const navigate = useNavigate();
 
   // Background particle animation
   useEffect(() => {
