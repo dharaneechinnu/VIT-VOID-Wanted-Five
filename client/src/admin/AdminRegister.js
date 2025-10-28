@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const AdminRegister = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     orgName: "",
     donorType: "",
@@ -29,7 +31,7 @@ const AdminRegister = () => {
     try {
       const res = await axios.post("http://localhost:3500/admin/register", formData);
       if (res.status === 201 || res.status === 200) {
-        setMessage("✅ Registration request submitted successfully!");
+        setMessage("✅ Registration request submitted successfully! Redirecting to login...");
         setFormData({
           orgName: "",
           donorType: "",
@@ -38,6 +40,9 @@ const AdminRegister = () => {
           website: "",
           requestMessage: "",
         });
+        setTimeout(() => {
+          navigate("/Admin/Login");
+        }, 1500);
       } else {
         setMessage("❌ Failed to submit. Please try again.");
       }

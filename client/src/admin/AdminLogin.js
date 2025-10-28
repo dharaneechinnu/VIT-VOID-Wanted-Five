@@ -1,7 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const AdminLogin = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -27,9 +30,10 @@ const AdminLogin = () => {
       const res = await axios.post("http://localhost:3500/admin/login", formData);
 
       if (res.status === 200) {
-        setMessage("✅ Admin login successful!");
-        console.log("Admin Logged In:", res.data);
-        // Optional redirect: window.location.href = "/admin/dashboard";
+        setMessage("✅ Admin login successful! Redirecting to dashboard...");
+        setTimeout(() => {
+          navigate("/Admin/Dashboard");
+        }, 1200);
       } else {
         setMessage("❌ Invalid username or password.");
       }
