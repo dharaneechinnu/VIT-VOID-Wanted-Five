@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { default: mongoose } = require('mongoose');
+const VerifierApplication = require('../models/verifierapplyform');
+
 
 exports.registerDonorRequest = async (req, res) => {
   try {
@@ -198,6 +200,97 @@ exports.createScholarship = async (req, res) => {
   } catch (error) {
     console.error('❌ Error in createScholarship:', error.message);
     res.status(500).json({ message: 'Error creating scholarship', error: error.message });
+  }
+};
+
+// Admin: view all scholarship applications (with optional filters)
+exports.viewAllApplications = async (req, res) => {
+  try {
+    const { scholarshipId, status, page = 1, limit = 25 } = req.query;
+    const filter = {};
+
+    if (scholarshipId) {
+      if (!mongoose.Types.ObjectId.isValid(scholarshipId)) return res.status(400).json({ message: 'Invalid scholarshipId' });
+      filter.scholarshipId = scholarshipId;
+    }
+    if (status) {
+      filter.status = status;
+    }
+
+    const skip = (Math.max(parseInt(page, 10), 1) - 1) * Math.max(parseInt(limit, 10), 1);
+
+    const [total, applications] = await Promise.all([
+      VerifierApplication.countDocuments(filter),
+      VerifierApplication.find(filter)
+        .populate('scholarshipId', 'scholarshipName title')
+        .populate('verifierId', 'institutionName contactEmail')
+        .populate('studentid', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit, 10)),
+    ]);
+
+    res.status(200).json({ total, page: parseInt(page, 10), limit: parseInt(limit, 10), applications });
+  } catch (error) {
+    console.error('Error in viewAllApplications:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Admin: get single application details
+exports.getApplicationDetails = async (req, res) => {
+  try {
+    const applicationId = req.params.applicationId || req.query.applicationId;
+    if (!applicationId) return res.status(400).json({ message: 'applicationId is required' });
+    if (!mongoose.Types.ObjectId.isValid(applicationId)) return res.status(400).json({ message: 'Invalid applicationId' });
+
+    const application = await VerifierApplication.findById(applicationId)
+      .populate('scholarshipId')
+      .populate('verifierId', 'institutionName contactEmail')
+      .populate('studentid', 'name email');
+
+    if (!application) return res.status(404).json({ message: 'Application not found' });
+    res.status(201).json({ "applicationLength": application.length, "application": application });
+  } catch (error) {
+    console.error('Error in getApplicationDetails:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Admin: update a document inside an application (mark verified/unverified or change docType)
+// PATCH /admin/applications/:applicationId/documents/:documentId
+exports.updateApplicationDocumentandapplication = async (req, res) => {
+  try {
+    const { applicationId, documentId } = req.params;
+    const { status } = req.body;
+    // status should be 'approved' or 'rejected' (string)
+    if (!applicationId || !documentId) return res.status(400).json({ message: 'applicationId and documentId are required in URL' });
+    if (!mongoose.Types.ObjectId.isValid(applicationId)) return res.status(400).json({ message: 'Invalid applicationId' });
+
+    const application = await VerifierApplication.findById(applicationId);
+    if (!application) return res.status(404).json({ message: 'Application not found' });
+
+    const doc = application.documents.id(documentId);
+    if (!doc) return res.status(404).json({ message: 'Document not found' });
+
+    // Always set verified true
+    doc.verified = true;
+
+    // Optionally update docType if provided
+    if (req.body.docType !== undefined) doc.docType = req.body.docType;
+
+    // Set application status if provided and valid
+    if (status === 'approved' || status === 'rejected') {
+      application.status = status;
+      application.donorDecision = status;
+    }
+
+    await application.save();
+
+    res.status(200).json({ message: 'Document verified and application status updated', document: doc, applicationStatus: application.status });
+  } catch (error) {
+    console.error('Error in updateApplicationDocumentandapplication:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
