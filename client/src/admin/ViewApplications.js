@@ -72,6 +72,50 @@ const Status = styled.div`
   box-shadow: 0 2px 5px rgba(0, 162, 255, 0.15);
 `;
 
+/* --- Layout helpers --- */
+// Wrapper is an alias for Container to keep naming in JSX consistent
+const Wrapper = Container;
+
+const List = styled.div`
+  margin-top: 18px; 
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+// Item reuses Card styles
+const Item = Card;
+
+const Row = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+`;
+
+// Use a styled button and avoid forwarding unexpected boolean props to the DOM
+const Button = styled.button`
+  background: #007bff;
+  border: none;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: #005fcc;
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+`;
+
 
 const ViewApplications = () => {
   const [apps, setApps] = useState([]);
@@ -226,7 +270,7 @@ const ViewApplications = () => {
             )}
 
             <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-              <Button onClick={() => viewApplication(app._id)} disabled={actionLoading}>View Details</Button>
+            
               {/* Show Approve only when donorDecision is not approved */}
               {app.donorDecision !== 'approved' && (
                 <Button style={{ background: '#16a34a' }} onClick={() => approveApplication(app._id)} disabled={actionLoading}>Approve</Button>
