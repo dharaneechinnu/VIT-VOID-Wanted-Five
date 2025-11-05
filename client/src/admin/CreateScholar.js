@@ -8,22 +8,26 @@ const PageContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f3f5f9;
+  background: linear-gradient(135deg, #f9fbff, #e6f3ff);
   padding: 40px;
+  font-family: 'Poppins', sans-serif;
 `;
 
+/* ---- Form Container ---- */
 const FormContainer = styled.div`
   width: 100%;
   max-width: 950px;
   background: #ffffff;
-  border-radius: 12px 12px 0 0;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 162, 255, 0.15);
   overflow: hidden;
+  border: 2px solid #bde0ff;
 `;
 
+/* ---- Title Bar ---- */
 const TitleBar = styled.div`
-  background: linear-gradient(90deg, #ffae00, #ff8533);
-  color: #081018;
+  background: linear-gradient(90deg, #00a2ff, #4db8ff);
+  color: #ffffff;
   font-size: 1.8rem;
   font-weight: 700;
   text-align: center;
@@ -32,11 +36,13 @@ const TitleBar = styled.div`
   letter-spacing: 1px;
 `;
 
+/* ---- Form Layout ---- */
 const Form = styled.form`
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
   padding: 35px 40px;
+  background: #ffffff;
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -44,6 +50,7 @@ const Form = styled.form`
   }
 `;
 
+/* ---- Field Group ---- */
 const FieldGroup = styled.div`
   flex: 1 1 calc(50% - 20px);
   display: flex;
@@ -54,61 +61,71 @@ const FieldGroup = styled.div`
   }
 `;
 
+/* ---- Label ---- */
 const Label = styled.label`
   font-weight: 600;
-  color: #333;
+  color: #007bff;
   margin-bottom: 6px;
+  font-size: 0.95rem;
 `;
 
+/* ---- Input ---- */
 const Input = styled.input`
   padding: 10px 12px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #f9fafc;
+  border: 1.5px solid #bcdfff;
+  background: #f5f9ff;
+  color: #1e3a8a;
   font-size: 0.95rem;
-  color: #333;
-  transition: all 0.3s ease;
+  transition: 0.2s ease;
 
   &:focus {
-    border-color: #ffae00;
-    background: #fff;
+    border-color: #00a2ff;
+    background: #ffffff;
     outline: none;
+    box-shadow: 0 0 4px rgba(0, 162, 255, 0.25);
   }
 `;
 
+/* ---- Textarea ---- */
 const Textarea = styled.textarea`
   padding: 10px 12px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #f9fafc;
+  border: 1.5px solid #bcdfff;
+  background: #f5f9ff;
+  color: #1e3a8a;
   font-size: 0.95rem;
-  color: #333;
   resize: vertical;
+  transition: 0.2s ease;
 
   &:focus {
-    border-color: #ffae00;
-    background: #fff;
+    border-color: #00a2ff;
+    background: #ffffff;
     outline: none;
+    box-shadow: 0 0 4px rgba(0, 162, 255, 0.25);
   }
 `;
 
+/* ---- Select ---- */
 const Select = styled.select`
   padding: 10px 12px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #f9fafc;
+  border: 1.5px solid #bcdfff;
+  background: #f5f9ff;
+  color: #1e3a8a;
   font-size: 0.95rem;
-  color: #333;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: 0.2s ease;
 
   &:focus {
-    border-color: #ffae00;
-    background: #fff;
+    border-color: #00a2ff;
+    background: #ffffff;
     outline: none;
+    box-shadow: 0 0 4px rgba(0, 162, 255, 0.25);
   }
 `;
 
+/* ---- Button Container ---- */
 const ButtonContainer = styled.div`
   width: 100%;
   display: flex;
@@ -116,29 +133,35 @@ const ButtonContainer = styled.div`
   margin-top: 10px;
 `;
 
+/* ---- Button ---- */
 const Button = styled.button`
   padding: 12px 25px;
   border-radius: 8px;
-  background: linear-gradient(90deg, #ffae00, #ff8533);
-  color: #081018;
+  background: linear-gradient(90deg, #00a2ff, #4db8ff);
+  color: #ffffff;
   font-weight: 700;
   font-size: 1rem;
   border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  letter-spacing: 0.4px;
+  box-shadow: 0 4px 10px rgba(0, 162, 255, 0.25);
 
   &:hover {
-    background: linear-gradient(90deg, #ffb933, #ffa500);
+    background: linear-gradient(90deg, #0092e5, #33b1ff);
     transform: translateY(-2px);
   }
 `;
 
+/* ---- Message ---- */
 const Message = styled.div`
   text-align: center;
   font-weight: 600;
-  color: ${(props) => (props.error ? "#e63946" : "#2a9d8f")};
+  color: ${(props) => (props.error ? "#f44336" : "#00a2ff")};
   margin-bottom: 10px;
+  margin-top: 15px;
 `;
+
 
 // ---------- Main Component ----------
 const CreateScholar = () => {

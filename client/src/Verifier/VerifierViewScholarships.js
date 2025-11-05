@@ -5,77 +5,96 @@ import styled from 'styled-components';
 
 // 🔹 Styled Components
 const Container = styled.div`
-  padding: 30px;
-  background: #0a1120;
+  padding: 40px;
+  background: #f4faff; /* soft white-blue base */
   min-height: 100vh;
-  color: #e6eef8;
+  color: #1e3a8a;
   display: flex;
   flex-direction: column;
   align-items: center;
 `;
 
+/* ---- CARD GRID ---- */
 const CardGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 20px;
+  gap: 24px;
   width: 100%;
   max-width: 1100px;
 `;
 
+/* ---- CARD ---- */
 const Card = styled.div`
-  background: #101a2b;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 2px solid #bde0ff;
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  padding: 22px;
+  box-shadow: 0 6px 14px rgba(77, 170, 252, 0.1);
   transition: all 0.3s ease;
+
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    box-shadow: 0 10px 18px rgba(0, 162, 255, 0.15);
+    border-color: #4daafc;
   }
 `;
 
+/* ---- TITLE ---- */
 const Title = styled.h2`
   font-size: 20px;
-  color: #4fc3f7;
+  color: #00a2ff; /* sky blue heading */
   margin-bottom: 8px;
+  font-weight: 700;
 `;
 
+/* ---- PROVIDER ---- */
 const Provider = styled.h4`
   font-size: 14px;
-  color: #a7b9d4;
+  color: #4daafc;
   margin-bottom: 16px;
-`;
-
-const Field = styled.div`
-  margin-bottom: 6px;
-  font-size: 15px;
-`;
-
-const Label = styled.span`
-  color: #9fb0c8;
   font-weight: 600;
 `;
 
-const Value = styled.span`
-  color: #ffffff;
-  margin-left: 5px;
+/* ---- FIELD ---- */
+const Field = styled.div`
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: #1e40af;
 `;
 
+/* ---- LABEL ---- */
+const Label = styled.span`
+  color: #4daafc;
+  font-weight: 600;
+`;
+
+/* ---- VALUE ---- */
+const Value = styled.span`
+  color: #1e3a8a;
+  margin-left: 6px;
+  font-weight: 500;
+`;
+
+/* ---- BUTTON ---- */
 const Button = styled.button`
-  margin-top: 14px;
-  background: #4fc3f7;
-  color: #0a1120;
+  margin-top: 16px;
+  background: #4daafc;
+  color: #ffffff;
   border: none;
-  padding: 8px 16px;
+  padding: 10px 16px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: 0.3s;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 8px rgba(0, 162, 255, 0.2);
+
   &:hover {
-    background: #03a9f4;
+    background: #00a2ff;
+    box-shadow: 0 5px 10px rgba(0, 162, 255, 0.25);
   }
 `;
+
 
 const VerifierViewScholarships = () => {
   const [list, setList] = useState([]);

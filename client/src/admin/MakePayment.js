@@ -4,57 +4,72 @@ import styled from "styled-components";
 
 const Wrapper = styled.div`
   min-height: 100vh;
-  background: #0a1120;
-  color: #e6eef8;
-  padding: 30px;
+  background: #f9fbff; /* soft blue-white background */
+  color: #1e3a8a;
+  padding: 40px;
+  font-family: 'Poppins', sans-serif;
 `;
 
+/* ---- Title ---- */
 const Title = styled.h2`
   text-align: center;
   font-size: 28px;
   margin-bottom: 30px;
-  color: #ffae00;
+  color: #00a2ff; /* vibrant sky blue */
+  font-weight: 700;
+  letter-spacing: 0.5px;
 `;
 
+/* ---- Card List ---- */
 const List = styled.div`
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 20px;
+  gap: 22px;
 `;
 
+/* ---- Card ---- */
 const Card = styled.div`
-  background: #101a2b;
+  background: #ffffff;
   border-radius: 12px;
-  padding: 20px;
+  padding: 20px 22px;
   width: 340px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.3s;
+  border: 2px solid #bde0ff;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 15px rgba(0, 162, 255, 0.1);
+
   &:hover {
     transform: translateY(-4px);
-    background: #15223a;
+    background: #f4faff;
+    box-shadow: 0 10px 20px rgba(0, 162, 255, 0.15);
   }
 `;
 
+/* ---- Rows ---- */
 const Row = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 `;
 
+/* ---- Label ---- */
 const Label = styled.span`
-  color: #9fb0c8;
+  color: #6b7280; /* muted blue-gray label text */
   font-size: 13px;
+  font-weight: 600;
 `;
 
+/* ---- Value ---- */
 const Value = styled.span`
-  color: #e6eef8;
-  font-weight: 500;
+  color: #007bff;
+  font-weight: 600;
+  font-size: 14px;
 `;
 
+/* ---- Button ---- */
 const Button = styled.button`
-  background: linear-gradient(90deg, #ffae00, #ff6600);
-  color: #fff;
+  background: linear-gradient(90deg, #00a2ff, #4db8ff);
+  color: #ffffff;
   border: none;
   padding: 10px 18px;
   border-radius: 8px;
@@ -63,20 +78,29 @@ const Button = styled.button`
   cursor: pointer;
   width: 100%;
   margin-top: 15px;
-  transition: 0.3s;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 8px rgba(0, 162, 255, 0.25);
+
   &:hover {
-    background: linear-gradient(90deg, #ffc233, #ff8533);
+    background: linear-gradient(90deg, #0092e5, #33b1ff);
+    transform: translateY(-2px);
   }
 `;
 
+/* ---- Message ---- */
 const Message = styled.div`
-  color: ${props => props.type === "error" ? "#ff1744" : "#00e676"};
-  background: ${props => props.type === "error" ? "rgba(255,23,68,0.1)" : "rgba(0,230,118,0.1)"};
+  color: ${(props) => (props.type === "error" ? "#f44336" : "#00a2ff")};
+  background: ${(props) =>
+    props.type === "error"
+      ? "rgba(244, 67, 54, 0.08)"
+      : "rgba(0, 162, 255, 0.08)"};
   padding: 10px;
   border-radius: 6px;
   margin-top: 20px;
   text-align: center;
+  font-weight: 600;
 `;
+
 
 const MakePayment = () => {
   const [applications, setApplications] = useState([]);
