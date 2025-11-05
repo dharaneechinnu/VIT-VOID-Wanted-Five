@@ -3,34 +3,91 @@ const mongoose = require('mongoose');
 
 const scholarshipSchema = new mongoose.Schema(
   {
-    // ✅ Basic Details
-    title: {
+  scholarshipName: {
       type: String,
       required: true,
       trim: true,
-    },
-
-    description: {
+      },
+      providerName: {
       type: String,
+      required: true,
       trim: true,
-    },
-
-    amount: {
+      },
+      description: {
+      type: String,
+      required: true,
+      },
+      eligibilityCriteria: {
+      tenthMarks: {
       type: Number,
-      required: true,
-      min: 1,
-    },
-
-    eligibilityCriteria: {
+      min: 0,
+      max: 100,
+      default: null,
+      },
+      twelfthMarks: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: null,
+      },
+      collegeCGPA: {
+      type: Number,
+      min: 0,
+      max: 10,
+      default: null,
+      },
+      maxParentIncome: {
+      type: Number,
+      default: null,
+      },
+      womenPreference: {
+      type: Boolean,
+      default: false,
+      },
+      academicPerformance: {
       type: String,
-      required: true,
-      trim: true,
-    },
 
-    deadline: {
+      default: "Any",
+      },
+      disabilityAllowed: {
+      type: [String],
+      enum: [
+      "None",
+      "Physical Disability",
+      "Visual Impairment",
+      "Hearing Impairment",
+      "Learning / Other Disability",
+      ],
+      default: ["None"],
+      },
+      extracurricular: {
+      type: [String],
+      enum: [
+      "Sports & Fitness",
+      "Technical & Innovation",
+      "Academic & Research Activities",
+      "Leadership & Volunteering",
+      "Entrepreneurship & Startups",
+      ],
+      default: [],
+      },
+      firstGenGraduate: {
+      type: Boolean,
+      default: false,
+      },
+      specialCategory: {
+      type: [String], // ["Single Parent", "Orphan"]
+      default: [],
+      },
+      },
+      applicationDeadline: {
       type: Date,
       required: true,
-    },
+      },
+      scholarshipAmount: {
+      type: Number,
+      required: true,
+      },
 
     // ✅ Link to Donor (Who created it)
     createdBy: {
@@ -39,36 +96,20 @@ const scholarshipSchema = new mongoose.Schema(
       required: true,
     },
 
-    // ✅ Applied Students
-    applicants: [
-      {
-        studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'UsersLogins' },
-        status: {
-          type: String,
-          enum: ['pending', 'verified', 'approved', 'funded', 'rejected'],
-          default: 'pending',
-        },
-        appliedAt: { type: Date, default: Date.now },
-      },
-    ],
+    // // ✅ Applied Students
+    // applicants: [
+    //   {
+    //     studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'UsersLogins' },
+    //     status: {
+    //       type: String,
+    //       enum: ['pending', 'verified', 'approved', 'funded', 'rejected'],
+    //       default: 'pending',
+    //     },
+    //     appliedAt: { type: Date, default: Date.now },
+    //   },
+    // ],
 
-    // ✅ Additional Info
-    category: {
-      type: String,
-      enum: ['School', 'College', 'Research', 'Other'],
-      default: 'School',
-    },
-
-    region: {
-      type: String,
-      trim: true,
-    },
-
-    totalFunded: {
-      type: Number,
-      default: 0,
-    },
-
+  
     isActive: {
       type: Boolean,
       default: true,
@@ -76,6 +117,7 @@ const scholarshipSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
 
 const Scholarship = mongoose.model('Scholarship', scholarshipSchema);
 module.exports = Scholarship;
