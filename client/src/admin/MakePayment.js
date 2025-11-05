@@ -152,7 +152,15 @@ const MakePayment = () => {
             );
 
             if (payoutRes.status === 200) {
-              setMessage("✅ Payment and payout completed successfully!");
+              setMessage("✅ Payment and payout completed successfully! Sending receipts...");
+              // Request server to send receipts (student + verifier)
+              try {
+                await axios.post(`http://localhost:3500/admin/applications/${applicationId}/send-receipts`);
+                setMessage("✅ Payment, payout and receipts completed successfully!");
+              } catch (sendErr) {
+                console.warn('Failed to trigger receipts:', sendErr);
+                setMessage("⚠️ Payment completed but sending receipts failed. Check server logs.");
+              }
               fetchApprovedApplications();
             } else {
               setMessage("⚠️ Payout failed. Please check logs.");
@@ -193,8 +201,7 @@ const MakePayment = () => {
             <Row>
               <Label>Student:</Label> <Value>{app.studentname}</Value>
             </Row>
-            <Row>
-              <Label>Email:</Label> <Value>{app.studentemail}</Value>
+            <Row>     
             </Row>
             <Row>
               <Label>Institution:</Label> <Value>{app.institutionname}</Value>

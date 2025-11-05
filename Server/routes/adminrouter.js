@@ -35,6 +35,10 @@ router.patch('/applications/:applicationId/documents/:documentId', admincontroll
 // PATCH /admin/applications/:applicationId/makepayout
 router.patch('/applications/:applicationId/makepayout', admincontroller.makePayoutToVerifier);
 
+// Resend/send receipts (PDF) for an application
+// POST /admin/applications/:applicationId/send-receipts
+router.post('/applications/:applicationId/send-receipts', admincontroller.resendReceipt);
+
 // Create a Razorpay order for an application (frontend will open checkout)
 // POST /admin/applications/:applicationId/create-order
 router.post('/applications/:applicationId/create-order', admincontroller.createOrderForApplication);

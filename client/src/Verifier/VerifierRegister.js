@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 
 const VerifierRegister = () => {
   const [formData, setFormData] = useState({
-    Inititutename: "",
+    institutionName: "",
     institutionType: "",
     institutionCode: "",
     contactEmail: "",
-    contactperson: "",
+    contactPerson: "",
     requestMessage: "",
     website: "",
   });
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -35,6 +37,8 @@ const VerifierRegister = () => {
 
       if (res.status === 200 || res.status === 201) {
         setMessage("✅ Verifier request submitted successfully!");
+        // redirect to verifier login after short delay
+        setTimeout(() => navigate('/Verifier/Login'), 700);
       } else {
         setMessage("❌ Something went wrong. Please try again.");
       }
@@ -198,6 +202,41 @@ const VerifierRegister = () => {
             gap: 16px;
           }
 
+          .verifier-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            align-items: start;
+          }
+
+          .verifier-form-grid .left,
+          .verifier-form-grid .right {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+          }
+
+          /* make textarea full-row when placed below the grid */
+          .verifier-form-grid .right textarea {
+            min-height: 100%;
+            height: 100%;
+            resize: vertical;
+          }
+          .verifier-textarea {
+            min-height: 160px;
+            width: 100%;
+            resize: vertical;
+            padding: 14px;
+            font-size: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            outline: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+          }
+
           .verifier-input,
           .verifier-textarea,
           .verifier-select {
@@ -284,80 +323,91 @@ const VerifierRegister = () => {
           <h2 className="verifier-heading">Verifier Registration</h2>
 
           <form onSubmit={handleSubmit} className="verifier-form">
-            <input
-              type="text"
-              name="Inititutename"
-              placeholder="Institution Name"
-              value={formData.Inititutename}
-              onChange={handleChange}
-              required
-              className="verifier-input"
-            />
+            <div className="verifier-form-grid">
+              <div className="left">
+                <input
+                  type="text"
+                  name="institutionName"
+                  placeholder="Institution Name"
+                  value={formData.institutionName}
+                  onChange={handleChange}
+                  required
+                  className="verifier-input"
+                />
 
-            <select
-              name="institutionType"
-              value={formData.institutionType}
-              onChange={handleChange}
-              required
-              className="verifier-select"
-            >
-              <option value="">Select Institution Type</option>
-              <option value="college">College</option>
-              <option value="university">University</option>
-              <option value="school">School</option>
-            </select>
+                <select
+                  name="institutionType"
+                  value={formData.institutionType}
+                  onChange={handleChange}
+                  required
+                  className="verifier-select"
+                >
+                  <option value="">Select Institution Type</option>
+                  <option value="college">College</option>
+                  <option value="university">University</option>
+                  <option value="school">School</option>
+                </select>
 
-            <input
-              type="text"
-              name="institutionCode"
-              placeholder="Institution Code"
-              value={formData.institutionCode}
-              onChange={handleChange}
-              required
-              className="verifier-input"
-            />
+                <input
+                  type="text"
+                  name="institutionCode"
+                  placeholder="Institution Code"
+                  value={formData.institutionCode}
+                  onChange={handleChange}
+                  required
+                  className="verifier-input"
+                />
+              </div>
 
-            <input
-              type="email"
-              name="contactEmail"
-              placeholder="Contact Email"
-              value={formData.contactEmail}
-              onChange={handleChange}
-              required
-              className="verifier-input"
-            />
+              <div className="right">
+                <input
+                  type="email"
+                  name="contactEmail"
+                  placeholder="Contact Email"
+                  value={formData.contactEmail}
+                  onChange={handleChange}
+                  required
+                  className="verifier-input"
+                />
 
-            <input
-              type="text"
-              name="contactperson"
-              placeholder="Contact Person"
-              value={formData.contactperson}
-              onChange={handleChange}
-              required
-              className="verifier-input"
-            />
+                <input
+                  type="text"
+                  name="contactPerson"
+                  placeholder="Contact Person"
+                  value={formData.contactPerson}
+                  onChange={handleChange}
+                  required
+                  className="verifier-input"
+                />
 
-            <input
-              type="text"
-              name="website"
-              placeholder="Institution Website"
-              value={formData.website}
-              onChange={handleChange}
-              className="verifier-input"
-            />
+                <input
+                  type="text"
+                  name="website"
+                  placeholder="Institution Website"
+                  value={formData.website}
+                  onChange={handleChange}
+                  className="verifier-input"
+                />
+              </div>
+            </div>
 
-            <textarea
-              name="requestMessage"
-              placeholder="Enter your request message..."
-              value={formData.requestMessage}
-              onChange={handleChange}
-              required
-              className="verifier-textarea"
-            ></textarea>
+            {/* Full-width request message row spanning both columns */}
+            <div style={{ marginTop: 18 }}>
+              <textarea
+                name="requestMessage"
+                placeholder="Enter your request message..."
+                value={formData.requestMessage}
+                onChange={handleChange}
+                required
+                className="verifier-textarea"
+              ></textarea>
+            </div>
 
-            <button type="submit" className="verifier-button" disabled={loading}>
-              {loading ? "Submitting..." : "Submit Request"}
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 18 }}>
+              <button type="submit" className="verifier-button" disabled={loading}>
+                {loading ? "Submitting..." : "Submit Request"}
+              </button>
+            </div>
           </form>
 
           {message && <p className="verifier-message">{message}</p>}

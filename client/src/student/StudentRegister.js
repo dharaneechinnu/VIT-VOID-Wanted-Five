@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 
 const StudentRegister = () => {
@@ -20,6 +21,7 @@ const StudentRegister = () => {
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,8 +35,8 @@ const StudentRegister = () => {
 
     try {
       const res = await axios.post("http://localhost:3500/student/register", formData);
-      if (res.status === 200) {
-        setMessage("✅ Registration successful!");
+      if (res.status === 200 || res.status === 201) {
+        setMessage("✅ Registration successful! Redirecting to login...");
         setFormData({
           name: "",
           email: "",
@@ -50,6 +52,8 @@ const StudentRegister = () => {
           familyIncome: "",
           hasIncomeCertificate: "",
         });
+        // Give the user a moment to see the success message, then navigate to login
+        setTimeout(() => navigate('/Student/Login'), 900);
       }
     } catch (error) {
       console.error(error);
@@ -203,6 +207,15 @@ const StudentRegister = () => {
             box-sizing: border-box;
           }
 
+          /* Labels for accessibility */
+          label {
+            display: block;
+            font-size: 14px;
+            color: #bfeeff;
+            margin-bottom: 6px;
+            font-weight: 600;
+          }
+
           input:focus, select:focus, textarea:focus {
             border-color: #00cfff;
             box-shadow: 0 0 8px rgba(0, 207, 255, 0.6);
@@ -263,34 +276,79 @@ const StudentRegister = () => {
           <h2>Student Registration</h2>
 
           <form onSubmit={handleSubmit}>
-            <input type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} required />
-            <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
-            <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
-            <input type="date" name="dob" value={formData.dob} onChange={handleChange} required />
+            <div>
+              <label htmlFor="name">Full Name</label>
+              <input id="name" type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} required />
+            </div>
 
-            <select name="gender" value={formData.gender} onChange={handleChange} required>
-              <option value="">Select Gender</option>
-              <option value="female">Female</option>
-              <option value="male">Male</option>
-              <option value="other">Other</option>
-            </select>
+            <div>
+              <label htmlFor="email">Email</label>
+              <input id="email" type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
+            </div>
 
-            <input type="text" name="mobileNo" placeholder="Mobile Number" value={formData.mobileNo} onChange={handleChange} required />
+            <div>
+              <label htmlFor="password">Password</label>
+              <input id="password" type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
+            </div>
 
-            <textarea name="address" placeholder="Residential Address" value={formData.address} onChange={handleChange} required />
-            <textarea name="parentAddress" placeholder="Parent Address" value={formData.parentAddress} onChange={handleChange} required />
+            <div>
+              <label htmlFor="dob">Date of Birth</label>
+              <input id="dob" type="date" name="dob" value={formData.dob} onChange={handleChange} required />
+            </div>
 
-            <input type="text" name="institution" placeholder="Institution Name" value={formData.institution} onChange={handleChange} required />
-            <input type="text" name="classOrYear" placeholder="Class / Year" value={formData.classOrYear} onChange={handleChange} required />
-            <input type="number" name="marksPercentage" placeholder="Marks Percentage" value={formData.marksPercentage} onChange={handleChange} required />
-            <input type="number" name="familyIncome" placeholder="Family Income" value={formData.familyIncome} onChange={handleChange} required />
+            <div>
+              <label htmlFor="gender">Gender</label>
+              <select id="gender" name="gender" value={formData.gender} onChange={handleChange} required>
+                <option value="">Select Gender</option>
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
 
-            {/* 🔵 Income Certificate Dropdown */}
-            <select name="hasIncomeCertificate" value={formData.hasIncomeCertificate} onChange={handleChange} required>
-              <option value="">Do you have an income certificate?</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </select>
+            <div>
+              <label htmlFor="mobileNo">Mobile Number</label>
+              <input id="mobileNo" type="text" name="mobileNo" placeholder="Mobile Number" value={formData.mobileNo} onChange={handleChange} required />
+            </div>
+
+            <div>
+              <label htmlFor="address">Residential Address</label>
+              <textarea id="address" name="address" placeholder="Residential Address" value={formData.address} onChange={handleChange} required />
+            </div>
+
+            <div>
+              <label htmlFor="parentAddress">Parent Address</label>
+              <textarea id="parentAddress" name="parentAddress" placeholder="Parent Address" value={formData.parentAddress} onChange={handleChange} required />
+            </div>
+
+            <div>
+              <label htmlFor="institution">Institution Name</label>
+              <input id="institution" type="text" name="institution" placeholder="Institution Name" value={formData.institution} onChange={handleChange} required />
+            </div>
+
+            <div>
+              <label htmlFor="classOrYear">Class / Year</label>
+              <input id="classOrYear" type="text" name="classOrYear" placeholder="Class / Year" value={formData.classOrYear} onChange={handleChange} required />
+            </div>
+
+            <div>
+              <label htmlFor="marksPercentage">Marks Percentage</label>
+              <input id="marksPercentage" type="number" name="marksPercentage" placeholder="Marks Percentage" value={formData.marksPercentage} onChange={handleChange} required />
+            </div>
+
+            <div>
+              <label htmlFor="familyIncome">Family Income</label>
+              <input id="familyIncome" type="number" name="familyIncome" placeholder="Family Income" value={formData.familyIncome} onChange={handleChange} required />
+            </div>
+
+            <div>
+              <label htmlFor="hasIncomeCertificate">Do you have an income certificate?</label>
+              <select id="hasIncomeCertificate" name="hasIncomeCertificate" value={formData.hasIncomeCertificate} onChange={handleChange} required>
+                <option value="">Do you have an income certificate?</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
 
             <button type="submit" disabled={loading}>
               {loading ? "Registering..." : "Register"}

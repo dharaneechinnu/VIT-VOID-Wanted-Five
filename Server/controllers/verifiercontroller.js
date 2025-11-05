@@ -6,28 +6,32 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
-
 // ✅ Register Verifier Request (Institution Registration)
 exports.registerVerifierRequest = async (req, res) => {
   try {
+    // Accept either camelCase `contactPerson` or legacy `contactperson` from clients
     const {
       institutionName,
       institutionType,
       institutionCode,
       contactEmail,
-      contactPerson,
+      contactPerson: contactPersonRaw,
       requestMessage,
       website,
     } = req.body;
+    const contactPerson = contactPersonRaw || req.body.contactperson;
+    console.log('Received verifier registration request:', req.body);
 
     // Check for missing fields
-    if (!institutionName || !contactEmail) {
-      return res.status(400).json({ message: 'Institution name and contact email are required.' });
+    if (!institutionName || !contactEmail || !contactPerson) {
+      console.log('Missing fields:', { institutionName, contactEmail, contactPerson });
+      return res.status(400).json({ message: 'Institution name, contact email and contact person are required.' });
     }
 
     // Check for existing record
     const existing = await Verifier.findOne({ contactEmail });
     if (existing) {
+      console.log('Institution already registered with email:', contactEmail);
       return res.status(400).json({ message: 'Institution already registered' });
     }
 
@@ -37,14 +41,23 @@ exports.registerVerifierRequest = async (req, res) => {
       institutionCode,
       contactEmail,
       contactPerson,
+      // also preserve legacy field for backward compatibility
+      contactperson: req.body.contactperson,
       requestMessage,
       website,
       approved: false,
       status: 'pending',
     });
+    // Validate instance first to return a friendly error for validation problems
+    try {
+      await verifier.validate();
+    } catch (validationErr) {
+      console.error('Verifier validation failed:', validationErr);
+      return res.status(400).json({ message: 'Validation failed', errors: validationErr.errors });
+    }
 
     await verifier.save();
-
+    console.log('Verifier registration request saved:', verifier._id);
     res.status(201).json({
       message: 'Verifier registration request submitted successfully. Awaiting Super Admin approval.',
       verifier: {
@@ -54,10 +67,10 @@ exports.registerVerifierRequest = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error('Error in registerVerifierRequest:', error);
     res.status(500).json({ message: 'Error submitting request', error: error.message });
   }
 };
-
 // ✅ Login Verifier
 exports.loginVerifier = async (req, res) => {
   try {

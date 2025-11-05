@@ -12,6 +12,7 @@ const { createBlock, generateSecureTransactionId } = require('../services/blockc
 const nodemailer = require('nodemailer');
 const PDFDocument = require('pdfkit');
 const stream = require('stream');
+const { sendReceiptEmailUsingGmail } = require('../utils/email');
 
 
 exports.registerDonorRequest = async (req, res) => {
@@ -1015,6 +1016,91 @@ exports.getApplicationsForScholarship = async (req, res) => {
     return res.status(200).json({ total: applications.length, applications });
   } catch (error) {
     console.error('Error in getApplicationsForScholarship:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Endpoint: resend receipt emails (PDF) for an application (uses latest paid transaction)
+exports.resendReceipt = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    if (!applicationId) return res.status(400).json({ message: 'applicationId is required' });
+
+    const application = await VerifierApplication.findById(applicationId).populate('verifierId', 'contactEmail contactperson');
+    if (!application) return res.status(404).json({ message: 'Application not found' });
+
+    // Find the latest transaction for this application (prefer paid)
+    const TransactionModel = Transaction;
+    let txn = await TransactionModel.findOne({ applicationId }).sort({ createdAt: -1 });
+    if (!txn) return res.status(404).json({ message: 'No transaction found for this application' });
+
+    // Prepare email recipients
+    const studentEmail = application?.studentemail || application?.student?.email || application?.studentid?.email;
+    const verifierEmail = application?.payoutDetails?.email || application?.verifierId?.contactEmail;
+
+    const amountDisplay = (txn.amount || 0) / 100;
+    const date = new Date(txn.paidAt || txn.createdAt || Date.now()).toLocaleString();
+    const subject = `Scholarship payment receipt — Application ${applicationId}`;
+    const plainText = `Payment record for Application ${applicationId}\n\nTransaction ID: ${txn._id}\nPayment ID: ${txn.paymentId || 'N/A'}\nOrder ID: ${txn.orderId || 'N/A'}\nAmount: ₹${amountDisplay}\nDate: ${date}\n`;
+
+    // Generate PDF buffer
+    const generatePdfBuffer = () => new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const chunks = [];
+        const passthrough = new stream.PassThrough();
+        doc.pipe(passthrough);
+        passthrough.on('data', (chunk) => chunks.push(chunk));
+        passthrough.on('end', () => resolve(Buffer.concat(chunks)));
+
+        doc.fontSize(18).text('Payment Receipt', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(12).text(`Application ID: ${applicationId}`);
+        doc.text(`Transaction ID: ${txn._id}`);
+        doc.text(`Payment ID: ${txn.paymentId || 'N/A'}`);
+        doc.text(`Order ID: ${txn.orderId || 'N/A'}`);
+        doc.text(`Date: ${date}`);
+        doc.moveDown();
+
+        const payerName = application?.studentname || application?.studentid?.name || 'Student';
+        const payeeName = application?.verifierId?.contactperson || application?.payoutDetails?.accountHolderName || 'Verifier';
+        doc.text(`Payer (Student): ${payerName}`);
+        doc.text(`Payer Email: ${studentEmail || 'N/A'}`);
+        doc.moveDown();
+        doc.text(`Payee (Verifier): ${payeeName}`);
+        doc.text(`Payee Email: ${verifierEmail || 'N/A'}`);
+        doc.moveDown();
+        doc.fontSize(14).text(`Amount Paid: ₹${amountDisplay}`);
+        doc.moveDown(2);
+        doc.fontSize(10).text('This is a computer-generated receipt.', { align: 'left' });
+        doc.end();
+      } catch (e) { reject(e); }
+    });
+
+    const pdfBuffer = await generatePdfBuffer();
+
+    const sent = [];
+    if (studentEmail) {
+      try {
+        await sendReceiptEmailUsingGmail({ to: studentEmail, subject, text: plainText, attachments: [{ filename: `receipt_${applicationId}.pdf`, content: pdfBuffer }] });
+        sent.push(studentEmail);
+      } catch (e) {
+        console.error('Failed to send receipt to student:', e);
+      }
+    }
+    if (verifierEmail && verifierEmail !== studentEmail) {
+      try {
+        await sendReceiptEmailUsingGmail({ to: verifierEmail, subject, text: plainText, attachments: [{ filename: `receipt_${applicationId}.pdf`, content: pdfBuffer }] });
+        sent.push(verifierEmail);
+      } catch (e) {
+        console.error('Failed to send receipt to verifier:', e);
+      }
+    }
+
+    if (sent.length === 0) return res.status(500).json({ message: 'No receipts sent; check logs and SMTP configuration' });
+    return res.status(200).json({ message: 'Receipts sent', recipients: sent });
+  } catch (error) {
+    console.error('Error in resendReceipt:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
