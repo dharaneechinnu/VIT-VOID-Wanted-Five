@@ -705,8 +705,9 @@ exports.verifyPaymentForApplication = async (req, res) => {
 
         const studentEmail = appPop?.studentemail || appPop?.student?.email || (appPop?.studentid && appPop.studentid.email);
         const verifierEmail = appPop?.payoutDetails?.email || appPop?.verifierId?.contactEmail;
-
-        const amountDisplay = (amount || txn.amount || 0) / 100;
+  console.log('DEBUG txn.amount (paise):', txn.amount);
+  // txn.amount is stored in the smallest currency unit (paise). Convert to rupees for display.
+  const amountDisplay = Number(((txn.amount || 0) / 100).toFixed(2));
         const date = new Date().toLocaleString();
 
         const subject = `Scholarship payment receipt — Application ${applicationId}`;

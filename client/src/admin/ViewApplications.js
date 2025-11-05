@@ -138,7 +138,7 @@ const ViewApplications = () => {
         console.log('Applications fetched:', res.data.applications);
         // Hide applications that have been approved by donor (donorDecision === 'approved')
         const raw = res.data.applications || [];
-        const visible = raw.filter(a => String(a.donorDecision || '').toLowerCase() !== 'approved');
+        const visible = raw.filter(a => String(a.donorDecision || '').toLowerCase() === 'pending' && String(a.status || '').toLowerCase() !== 'pending');
         setApps(visible);
       } else {
         setError('Unexpected response from server');
