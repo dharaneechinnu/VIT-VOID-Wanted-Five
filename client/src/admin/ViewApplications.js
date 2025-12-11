@@ -133,7 +133,7 @@ const ViewApplications = () => {
     setError('');
     try {
       console.log('Fetching applications for adminId:', adminId);
-      const res = await axios.get(`http://localhost:3500/admin/getAllApplications/${adminId}`);
+      const res = await axios.get(`https://vit-void-wanted-five-2.onrender.com/admin/getAllApplications/${adminId}`);
       if (res.status === 200 && res.data) {
         console.log('Applications fetched:', res.data.applications);
         // Hide applications that have been approved by donor (donorDecision === 'approved')
@@ -154,7 +154,7 @@ const ViewApplications = () => {
     if (!applicationId) return;
     try {
       setActionLoading(true);
-      const res = await axios.get(`http://localhost:3500/admin/applications/${applicationId}`);
+      const res = await axios.get(`https://vit-void-wanted-five-2.onrender.com/admin/applications/${applicationId}`);
       if (res && (res.status === 200 || res.status === 201) && res.data) {
         const app = res.data.application || res.data.application || null;
         // Do not show details if donorDecision is approved — hide complete details per requirement
@@ -177,7 +177,7 @@ const ViewApplications = () => {
     try {
       setActionLoading(true);
       // documentId in URL is not used by controller, pass a placeholder
-      const res = await axios.patch(`http://localhost:3500/admin/applications/${applicationId}/documents/approve`, { status: 'approved' });
+      const res = await axios.patch(`https://vit-void-wanted-five-2.onrender.com/admin/applications/${applicationId}/documents/approve`, { status: 'approved' });
       if (res && res.status === 200) {
         // refresh list. Do NOT show details for an approved application (hide complete details)
         await fetchApplications();

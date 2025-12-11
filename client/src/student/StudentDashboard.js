@@ -243,7 +243,7 @@ const ApplicationStatusChecker = () => {
     setResult(null);
     try {
       const res = await fetch(
-        `http://localhost:3500/student/applicationstatus/${encodeURIComponent(applicationNo)}`
+        `https://vit-void-wanted-five-2.onrender.com/student/applicationstatus/${encodeURIComponent(applicationNo)}`
       );
       const data = await res.json();
       if (!res.ok) return setResult({ error: data.message || 'Unable to fetch' });

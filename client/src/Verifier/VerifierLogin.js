@@ -25,7 +25,7 @@ const VerifierLogin = () => {
     setMessage("");
 
     try {
-      const res = await axios.post("http://localhost:3500/verifier/login", formData);
+      const res = await axios.post("https://vit-void-wanted-five-2.onrender.com/verifier/login", formData);
 
       if (res.status === 200) {
         setMessage("✅ Login successful!");

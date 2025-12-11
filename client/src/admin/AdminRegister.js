@@ -29,7 +29,7 @@ const AdminRegister = () => {
     setMessage("");
 
     try {
-      const res = await axios.post("http://localhost:3500/admin/register", formData);
+      const res = await axios.post("https://vit-void-wanted-five-2.onrender.com/admin/register", formData);
       if (res.status === 201 || res.status === 200) {
         setMessage("✅ Registration request submitted successfully! Redirecting to login...");
         setFormData({

@@ -268,7 +268,7 @@ console.log("Admin ID:", adminId);
     };
 
     try {
-      const res = await axios.post("http://localhost:3500/admin/createscholarship", payload);
+      const res = await axios.post("https://vit-void-wanted-five-2.onrender.com/admin/createscholarship", payload);
       if (res.status === 200 || res.status === 201) {
         setMessage("🎉 Scholarship created successfully!");
         setForm({

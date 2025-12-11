@@ -101,7 +101,7 @@ const VerifierApplications = () => {
         return;
       }
 
-      const res = await axios.get('http://localhost:3500/verifier/getapplicationstatus', {
+      const res = await axios.get('https://vit-void-wanted-five-2.onrender.com/verifier/getapplicationstatus', {
         params: { verifierId },
       });
       // controller returns { applications } for verifierId
@@ -117,7 +117,7 @@ const VerifierApplications = () => {
   const viewApplication = async (id) => {
     try {
       console.log(`Fetching details for application ID: ${id}`);
-      const res = await axios.get(`http://localhost:3500/verifier/viewapplicationbyid`, {
+      const res = await axios.get(`https://vit-void-wanted-five-2.onrender.com/verifier/viewapplicationbyid`, {
         params: { applicationId: id },
       });
       if (res && res.status === 200) {

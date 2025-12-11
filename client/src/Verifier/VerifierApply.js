@@ -267,7 +267,7 @@ const VerifierApply = () => {
       // build payload from form and ensure verifierId is present
       const payload = { ...form };
       if (!payload.verifierId) payload.verifierId = readVerifierId();
-      const res = await axios.post("http://localhost:3500/verifier/applyscholarship", payload);
+      const res = await axios.post("https://vit-void-wanted-five-2.onrender.com/verifier/applyscholarship", payload);
       if (res.status === 200 || res.status === 201) {
         setMsg("🎉 Application submitted successfully!");
         // keep IDs in form state but clear other fields

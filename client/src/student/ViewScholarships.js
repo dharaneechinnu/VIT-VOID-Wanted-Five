@@ -30,7 +30,7 @@ const ViewScholarships = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('http://localhost:3500/student/scholarships');
+        const res = await fetch('https://vit-void-wanted-five-2.onrender.com/student/scholarships');
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed to fetch');
         setScholarships(data.scholarships || []);

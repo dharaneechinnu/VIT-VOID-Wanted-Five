@@ -27,7 +27,7 @@ const AdminLogin = () => {
 
     try {
       // 🟢 API endpoint for Admin Login
-      const res = await axios.post("http://localhost:3500/admin/login", formData);
+      const res = await axios.post("https://vit-void-wanted-five-2.onrender.com/admin/login", formData);
 
       if (res.status === 200 && res.data) {
         // Persist auth info in localStorage for admin session

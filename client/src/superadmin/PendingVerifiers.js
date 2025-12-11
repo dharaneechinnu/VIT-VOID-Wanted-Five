@@ -91,7 +91,7 @@ export default function PendingVerifiers() {
     setLoading(true);
     try {
       const res = await axios.get(
-        `http://localhost:3500/superadmin/pending-verifiers?page=1&limit=25`
+        `https://vit-void-wanted-five-2.onrender.com/superadmin/pending-verifiers?page=1&limit=25`
       );
       setList(res.data.verifiers || []);
     } catch (err) {
@@ -109,7 +109,7 @@ export default function PendingVerifiers() {
   const review = async (id, status) => {
     try {
       await axios.put(
-        `http://localhost:3500/superadmin/review-verifier/${id}`,
+        `https://vit-void-wanted-five-2.onrender.com/superadmin/review-verifier/${id}`,
         { status }
       );
       setList((prev) => prev.filter((d) => d._id !== id));

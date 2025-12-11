@@ -26,7 +26,7 @@ const fetchItems = async () => {
 
   try {
     // POST request sending JSON body like Postman:
-    const res = await axios.get('http://localhost:3500/verifier/getallscholarships');
+    const res = await axios.get('https://vit-void-wanted-five-2.onrender.com/verifier/getallscholarships');
     // handle possible response shapes
     if (Array.isArray(res.data)) {
       setItems(res.data);
@@ -54,7 +54,7 @@ const fetchItems = async () => {
   // const fetchItems = async () => {
   //   setLoading(true); setError("");
   //   try {
-  //     const res = await axios.post("http://localhost:3500/admin/scholars", { onlyActive: onlyActive ? "true" : "false" });
+  //     const res = await axios.post("https://vit-void-wanted-five-2.onrender.com/admin/scholars", { onlyActive: onlyActive ? "true" : "false" });
   //     setItems(Array.isArray(res.data) ? res.data : []);
   //   } catch (err) {
   //     console.error(err); setError("Failed to fetch records."); 

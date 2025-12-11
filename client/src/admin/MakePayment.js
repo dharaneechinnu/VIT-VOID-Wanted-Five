@@ -114,7 +114,7 @@ const MakePayment = () => {
   const fetchApprovedApplications = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:3500/admin/getAllApplications/${adminId}`);
+      const res = await axios.get(`https://vit-void-wanted-five-2.onrender.com/admin/getAllApplications/${adminId}`);
       const allApps = res.data.applications || [];
       const approvedApps = allApps.filter(app => String(app.donorDecision).toLowerCase() === "approved");
       setApplications(approvedApps);
@@ -134,7 +134,7 @@ const MakePayment = () => {
     setMessage("");
     try {
       const orderRes = await axios.post(
-        `http://localhost:3500/admin/applications/${applicationId}/create-order`
+        `https://vit-void-wanted-five-2.onrender.com/admin/applications/${applicationId}/create-order`
       );
 
       if (!orderRes || orderRes.status !== 201) {
@@ -155,7 +155,7 @@ const MakePayment = () => {
           try {
             // Verify payment
             const verifyRes = await axios.post(
-              `http://localhost:3500/admin/applications/${applicationId}/verify-payment`,
+              `https://vit-void-wanted-five-2.onrender.com/admin/applications/${applicationId}/verify-payment`,
               {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
@@ -172,14 +172,14 @@ const MakePayment = () => {
 
             // Trigger payout
             const payoutRes = await axios.patch(
-              `http://localhost:3500/admin/applications/${applicationId}/makepayout`
+              `https://vit-void-wanted-five-2.onrender.com/admin/applications/${applicationId}/makepayout`
             );
 
             if (payoutRes.status === 200) {
               setMessage("✅ Payment and payout completed successfully! Sending receipts...");
               // Request server to send receipts (student + verifier)
               try {
-                await axios.post(`http://localhost:3500/admin/applications/${applicationId}/send-receipts`);
+                await axios.post(`https://vit-void-wanted-five-2.onrender.com/admin/applications/${applicationId}/send-receipts`);
                 setMessage("✅ Payment, payout and receipts completed successfully!");
               } catch (sendErr) {
                 console.warn('Failed to trigger receipts:', sendErr);

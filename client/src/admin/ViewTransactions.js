@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const apiBase = 'http://localhost:3500';
+const apiBase = 'https://vit-void-wanted-five-2.onrender.com';
 
 const formatRupees = (paise) => {
   if (typeof paise !== 'number') return '-';

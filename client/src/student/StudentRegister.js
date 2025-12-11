@@ -34,7 +34,7 @@ const StudentRegister = () => {
     setMessage("");
 
     try {
-      const res = await axios.post("http://localhost:3500/student/register", formData);
+      const res = await axios.post("https://vit-void-wanted-five-2.onrender.com/student/register", formData);
       if (res.status === 200 || res.status === 201) {
         setMessage("✅ Registration successful! Redirecting to login...");
         setFormData({

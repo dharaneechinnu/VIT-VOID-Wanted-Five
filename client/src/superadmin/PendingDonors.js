@@ -92,7 +92,7 @@ export default function PendingDonors() {
     setLoading(true);
     try {
       const res = await axios.get(
-        `http://localhost:3500/superadmin/pending-donors?page=${p}&limit=25`
+        `https://vit-void-wanted-five-2.onrender.com/superadmin/pending-donors?page=${p}&limit=25`
       );
       setList(res.data.donors || []);
       setMsg('');
@@ -111,7 +111,7 @@ export default function PendingDonors() {
 
   const review = async (id, status) => {
     try {
-      await axios.put(`http://localhost:3500/superadmin/review-donor/${id}`, {
+      await axios.put(`https://vit-void-wanted-five-2.onrender.com/superadmin/review-donor/${id}`, {
         status,
       });
       setList((prev) => prev.filter((d) => d._id !== id));

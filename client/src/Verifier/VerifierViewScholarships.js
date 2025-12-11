@@ -106,7 +106,7 @@ const VerifierViewScholarships = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.get('http://localhost:3500/verifier/getallscholarships');
+      const res = await axios.get('https://vit-void-wanted-five-2.onrender.com/verifier/getallscholarships');
       if (res && res.status === 200) setList(res.data.scholarships || []);
     } catch (e) {
       setError(e.response?.data?.message || e.message);

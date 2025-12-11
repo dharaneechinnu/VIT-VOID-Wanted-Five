@@ -31,7 +31,7 @@ const VerifierRegister = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:3500/verifier/register",
+        "https://vit-void-wanted-five-2.onrender.com/verifier/register",
         formData
       );
 

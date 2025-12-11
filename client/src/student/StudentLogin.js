@@ -17,7 +17,7 @@ const StudentLogin = () => {
     setMessage("");
 
     try {
-      const { data, status } = await axios.post("http://localhost:3500/student/login", formData);
+      const { data, status } = await axios.post("https://vit-void-wanted-five-2.onrender.com/student/login", formData);
       if (status === 200) {
         setMessage("✅ Login successful!");
         console.log("Student Logged In:", data);
